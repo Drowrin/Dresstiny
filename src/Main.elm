@@ -554,5 +554,5 @@ view model =
                                             [ centerX ]
                                             <| List.map
                                                 ( lazy viewItemLite )
-                                                ( List.reverse fullList )
+                                                fullList 
         ]
