@@ -49,6 +49,7 @@ type alias RawItem =
     , screenshot : Maybe String
     , description : Maybe String
     , classType : Int
+    , collectibleHash : Maybe String
     }
 
 type alias Item =
@@ -58,144 +59,136 @@ type alias Item =
     , screenshot : String
     , description : String
     , classType : Int
+    , source : String
+    , sets : List String
     }
 
 decodeRawItem : Decoder RawItem
 decodeRawItem =
-    Decode.map5 RawItem
+    Decode.map6 RawItem
         ( field "displayProperties" <| field "name" string )
         ( field "displayProperties" <| maybe <| field "icon" string )
         ( maybe <| field "screenshot" string )
         ( field "displayProperties" <| maybe <| field "description" string )
         ( field "classType" int )
+        ( maybe <| Decode.map String.fromInt <| field "collectibleHash" int )
 
-resolveItem : String -> RawItem -> Dict String Item -> Dict String Item
-resolveItem hash item accumulator =
+getCollectible : Dict String Collectible -> Maybe String -> Maybe Collectible
+getCollectible cdict ms =
+    Maybe.andThen (\s -> Dict.get s cdict) ms
+
+resolveItem : Dict String Collectible -> String -> RawItem -> Dict String Item -> Dict String Item
+resolveItem cdict hash item accumulator =
     case ( item.icon, item.screenshot, item.description ) of
         ( Just icon, Just screenshot, Just description ) ->
-            Dict.insert
-                hash
-                ( Item hash item.name icon screenshot description item.classType )
-                accumulator
+            case getCollectible cdict item.collectibleHash of
+                Just collectible ->
+                    Dict.insert
+                        hash
+                        { hash = hash
+                        , name = item.name
+                        , icon = icon
+                        , screenshot = screenshot
+                        , description = description
+                        , classType = item.classType
+                        , source = collectible.source
+                        , sets = collectible.parents
+                        } 
+                        accumulator
+                Nothing -> accumulator
         _ ->
             accumulator
 
-resolveItems : Dict String RawItem -> Dict String Item
-resolveItems ridict =
-    Dict.foldl resolveItem Dict.empty ridict
+resolveItems : Dict String Collectible -> Dict String RawItem -> Dict String Item
+resolveItems cdict ridict =
+    Dict.foldl ( resolveItem cdict ) Dict.empty ridict
 
-decodeItems : Decoder (Dict String Item)
-decodeItems =
-    Decode.map resolveItems ( dict decodeRawItem )
+decodeItems : Dict String Collectible -> Decoder (Dict String Item)
+decodeItems cdict =
+    Decode.map ( resolveItems cdict ) ( dict decodeRawItem )
 
 type alias RawCollectible =
-    { name : Maybe String
-    , itemHash : String
+    { parentHashes : List String
+    , source : String
     }
 
 type alias Collectible =
-    { name : String
-    , item : Item
+    { parents : List PresNode
+    , source : String
     }
 
 decodeRawCollectible : Decoder RawCollectible
 decodeRawCollectible =
     Decode.map2 RawCollectible
-        ( field "displayProperties" <| maybe <| field "name" string )
-        ( Decode.map String.fromInt <| field "itemHash" int )
+        ( field "parentNodeHashes" <| list <| Decode.map String.fromInt <| int )
+        ( field "sourceString" string )
 
-resolveCollectible : Dict String Item -> String -> RawCollectible -> Dict String Collectible -> Dict String Collectible
-resolveCollectible idict hash rc accumulator =
-    case ( rc.name, Dict.get rc.itemHash idict ) of
-        ( Just name, Just item ) ->
-            Dict.insert hash ( Collectible name item ) accumulator
+foldPresNodes : Dict String PresNode -> String -> List String -> List String
+foldPresNodes pdict hash l =
+    case Dict.get hash pdict of
+        Just pnode ->
+            pnode :: l
         _ ->
-            accumulator
+            l
 
-resolveCollectibles : Dict String Item -> Dict String RawCollectible -> Dict String Collectible
-resolveCollectibles idict rcdict =
-    Dict.foldl ( resolveCollectible idict ) Dict.empty rcdict
+resolveCollectible : Dict String PresNode -> String -> RawCollectible -> Dict String Collectible -> Dict String Collectible
+resolveCollectible pdict hash rc accumulator =
+    Dict.insert
+        hash
+        { source = rc.source
+        , parents = List.foldl ( foldPresNodes pdict ) [] rc.parentHashes
+        }
+        accumulator
 
-decodeCollectibles : Dict String Item -> Decoder (Dict String Collectible)
-decodeCollectibles idict =
+resolveCollectibles : Dict String PresNode -> Dict String RawCollectible -> Dict String Collectible
+resolveCollectibles pdict rcdict =
+    Dict.foldl ( resolveCollectible pdict ) Dict.empty rcdict
+
+decodeCollectibles : Dict String PresNode -> Decoder (Dict String Collectible)
+decodeCollectibles pdict =
     Decode.map
-        ( resolveCollectibles idict )
+        ( resolveCollectibles pdict )
         ( dict decodeRawCollectible )
 
-type alias RawPresNode =
-    { name : Maybe String
-    , children : Maybe (List String)
-    }
+type alias RawPresNode = Maybe String
+
+type alias PresNode = String
 
 decodeRawPresNode : Decoder RawPresNode
 decodeRawPresNode =
-    Decode.map2 RawPresNode
-        ( field "displayProperties" <| maybe <| field "name" string )
-        ( at [ "children", "collectibles" ] <| maybe <| list <|
-            Decode.map String.fromInt <| field "collectibleHash" int )
+    field "displayProperties" <| maybe <| field "name" string
 
-resolveCList : Dict String Collectible -> String -> List Item -> List Item
-resolveCList cdict hash accumulator =
-    case Dict.get hash cdict of
-        Just c -> c.item :: accumulator
-        Nothing -> accumulator
+resolvePresNode : String -> RawPresNode -> Dict String PresNode -> Dict String PresNode
+resolvePresNode hash rp accumulator =
+    case rp of
+        Just p ->
+            Dict.insert hash p accumulator
+        Nothing ->
+            accumulator
 
-resolvePresNode : Dict String Collectible -> String -> RawPresNode -> Data -> Data
-resolvePresNode cdict _ pn accumulator =
-    let 
-        clist = case pn.children of
-            Just ls -> List.foldl ( resolveCList cdict ) [] ls
-            Nothing -> []
-    in
-        case ( pn.name, List.isEmpty clist ) of
-            ( Just name, False ) ->
-                Dict.insert name clist accumulator
-            _ ->
-                accumulator
+resolvePresNodes : Dict String RawPresNode -> Dict String PresNode
+resolvePresNodes rpdict =
+    Dict.foldl resolvePresNode Dict.empty rpdict
 
-
-resolvePresNodes : Dict String Collectible -> Dict String RawPresNode -> Data
-resolvePresNodes cdict pndict =
-    Dict.foldl ( resolvePresNode cdict ) Dict.empty pndict
-
-decodePresNodes : Dict String Collectible -> Decoder Data
-decodePresNodes cdict =
+decodePresNodes : Decoder (Dict String PresNode)
+decodePresNodes =
     Decode.map
-        ( resolvePresNodes cdict )
+        resolvePresNodes
         ( dict decodeRawPresNode )
 
 type alias ErrorType = Http.Error
-type alias Data = Dict String (List Item)
+type alias Data = Dict String Item
 
-type alias Doc =
-    { hash : String
-    , name : String
-    , presNode : String
-    , description : String
-    }
+type alias Index = ElmTextSearch.Index Item
 
-type alias Index = ElmTextSearch.Index Doc
-
-foldIList : String -> Item -> Index -> Index
-foldIList presNode item index =
+foldData : String -> Item -> Index -> Index
+foldData _ item index =
     let
-        r = ElmTextSearch.add
-            { hash = item.hash
-            , name = item.name
-            , presNode = presNode
-            , description = item.description
-            }
-            index
+        r = ElmTextSearch.add item index
     in
         case r of
             Ok i -> i
             Err _ -> index
-
-        
-
-foldData : String -> List Item -> Index -> Index
-foldData presNode items index =
-    List.foldl ( foldIList presNode ) index items
 
 createIndex : Data -> Index
 createIndex data =
@@ -203,11 +196,13 @@ createIndex data =
     ( ElmTextSearch.new
         { ref = .hash
         , fields =
-            [ ( .presNode, 3.0 )
-            , ( .name, 2.0 )
+            [ ( .name, 4.0 )
+            , ( .source, 2.0 )
             , ( .description, 1.0 )
             ]
-        , listFields = []
+        , listFields =
+            [ ( .sets, 3.0 )
+            ]
         }
     )
     data
@@ -232,7 +227,7 @@ search idict string index =
 type State
     = Error ErrorType
     | Loading String
-    | Ready Index (Dict String Item)
+    | Ready Index Data
 
 type FilterType
     = None
@@ -279,9 +274,9 @@ type Msg
     = GotError ErrorType
 
     | GotManifest Manifest
-    | GotItemData Manifest (Dict String Item)
-    | GotCollectibleData Manifest (Dict String Item) (Dict String Collectible)
-    | GotPresNodeData (Dict String Item) Data
+    | GotPresNodeData Manifest (Dict String PresNode)
+    | GotCollectibleData Manifest (Dict String Collectible)
+    | GotItemData Data
 
     | SearchString String
 
@@ -302,7 +297,7 @@ root = "https://www.bungie.net"
 
 init : () -> (Model, Cmd Msg)
 init _ =
-    ( Model "" False None Nothing <| Loading "Manifest"
+    ( Model "" False None Nothing <| Loading "Locating Manifests"
     , Http.get
         { url = root ++ "/Platform/Destiny2/Manifest"
         , expect = Http.expectJson
@@ -319,38 +314,38 @@ update msg model =
             , Cmd.none
             )
         
-        GotManifest m ->
-            ( { model | state = Loading "Loading Items" }
-            , Http.get
-                { url = root ++ m.itemDefUrl
-                , expect = Http.expectJson
-                    ( unpack GotError ( GotItemData m ) )
-                    decodeItems 
-                }
-            )
-        
-        GotItemData m idict ->
+        GotManifest manifest ->
             ( { model | state = Loading "Loading Sets" }
             , Http.get
-                { url = root ++ m.collectibleUrl
+                { url = root ++ manifest.presNodeUrl
                 , expect = Http.expectJson
-                    ( unpack GotError ( GotCollectibleData m idict ) )
-                    ( decodeCollectibles idict )
+                    ( unpack GotError ( GotPresNodeData manifest ) )
+                    decodePresNodes
                 }
             )
         
-        GotCollectibleData m idict cdict ->
-            ( { model | state = Loading "Indexing Data. This may take some time." }
+        GotPresNodeData manifest pdict ->
+            ( { model | state = Loading "Item Sources" }
             , Http.get
-                { url = root ++ m.presNodeUrl
+                { url = root ++ manifest.collectibleUrl
                 , expect = Http.expectJson
-                    ( unpack GotError ( GotPresNodeData idict ) )
-                    ( decodePresNodes cdict )
+                    ( unpack GotError ( GotCollectibleData manifest ) )
+                    ( decodeCollectibles pdict )
                 }
             )
         
-        GotPresNodeData idict data ->
-            ( { model | state = Ready ( createIndex data ) idict }
+        GotCollectibleData manifest cdict ->
+            ( { model | state = Loading "Loading Items. This may take some time." }
+            , Http.get
+                { url = root ++ manifest.itemDefUrl
+                , expect = Http.expectJson
+                    ( unpack GotError GotItemData )
+                    ( decodeItems cdict )
+                }
+            )
+        
+        GotItemData data ->
+            ( { model | state = Ready ( createIndex data ) data }
             , Cmd.none
             )
         
