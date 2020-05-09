@@ -51,23 +51,14 @@ type alias RawItem =
     , classType : Int
     }
 
-type ItemState
-    = Valid
-    | Invalid
-
 type alias Item =
-    { state : ItemState
-    , hash : String
+    { hash : String
     , name : String
     , icon : String
     , screenshot : String
     , description : String
     , classType : Int
     }
-
-defaultItem : Item
-defaultItem = 
-    Item Invalid "" "Unknown" "" "" "" -1
 
 decodeRawItem : Decoder RawItem
 decodeRawItem =
@@ -82,7 +73,10 @@ resolveItem : String -> RawItem -> Dict String Item -> Dict String Item
 resolveItem hash item accumulator =
     case ( item.icon, item.screenshot, item.description ) of
         ( Just icon, Just screenshot, Just description ) ->
-            Dict.insert hash ( Item Valid hash item.name icon screenshot description item.classType ) accumulator
+            Dict.insert
+                hash
+                ( Item hash item.name icon screenshot description item.classType )
+                accumulator
         _ ->
             accumulator
 
@@ -218,16 +212,21 @@ createIndex data =
     )
     data
 
-sortMap : List (String, Float) -> Dict String Item -> List Item
-sortMap l idict =
-    List.map
-        (\t -> Maybe.withDefault defaultItem <| Dict.get ( Tuple.first t ) idict )
-        ( List.sortBy Tuple.second l )
+sortFold : Dict String Item -> (String, Float) -> List Item -> List Item
+sortFold idict t l =
+    case Dict.get ( Tuple.first t ) idict of
+        Just i -> i :: l
+        Nothing -> l
 
-search : String -> Index -> Dict String Item -> Result String ( List Item )
-search string index idict =
+resultToSortedItems : Dict String Item -> List (String, Float) -> List Item
+resultToSortedItems idict l =
+    List.foldl ( sortFold idict ) [] ( List.sortBy Tuple.second l )
+        
+
+search : Dict String Item -> String -> Index -> Result String ( List Item )
+search idict string index =
     Result.map
-        (\t -> sortMap (Tuple.second t ) idict )
+        (\t -> resultToSortedItems idict <| Tuple.second t )
         <| ElmTextSearch.search string index
 
 type State
@@ -546,7 +545,7 @@ view model =
                     Ready index idict ->
                         if String.length model.string < 2
                         then el [centerX, centerY ] <| text "Ready to search!"
-                        else case search model.string index idict of
+                        else case search idict model.string index of
                             Err _ -> el [centerX, centerY ] <| text "No Results"
                             
                             Ok results ->
@@ -558,5 +557,7 @@ view model =
                                     fullList ->
                                         wrappedRow
                                             [ centerX ]
-                                            <| List.map ( lazy viewItemLite ) fullList
+                                            <| List.map
+                                                ( lazy viewItemLite )
+                                                ( List.reverse fullList )
         ]
