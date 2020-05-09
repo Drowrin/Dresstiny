@@ -224,11 +224,6 @@ search idict string index =
         (\t -> resultToSortedItems idict <| Tuple.second t )
         <| ElmTextSearch.search string index
 
-type State
-    = Error ErrorType
-    | Loading String
-    | Ready Index Data
-
 type FilterType
     = None
     | Hunter
@@ -262,12 +257,22 @@ filterPred ft =
         Titan ->
             (\i -> i.classType == 0)
 
+type State
+    = Error ErrorType
+    | Loading String
+    | Ready Index Data (List Item)
+
+type ViewState
+    = MainView
+    | SingleItem Item
+    | About
+
 type alias Model =
     { string : String
     , selectingFilter : Bool
     , filter : FilterType
-    , focused : Maybe Item
     , state : State
+    , viewState : ViewState
     }
 
 type Msg
@@ -283,8 +288,9 @@ type Msg
     | ToggleSelectingFitler
     | FilterSelected FilterType
 
+    | ReturnToList
     | FocusItem Item
-    | UnFocusItem
+    | AboutPressed
 
 unpack : (e -> b) -> (a -> b) -> Result e a -> b
 unpack errF okF result =
@@ -297,7 +303,7 @@ root = "https://www.bungie.net"
 
 init : () -> (Model, Cmd Msg)
 init _ =
-    ( Model "" False None Nothing <| Loading "Locating Manifests"
+    ( Model "" False None (Loading "Locating Manifests") MainView
     , Http.get
         { url = root ++ "/Platform/Destiny2/Manifest"
         , expect = Http.expectJson
@@ -345,14 +351,28 @@ update msg model =
             )
         
         GotItemData data ->
-            ( { model | state = Ready ( createIndex data ) data }
+            ( { model | state = Ready ( createIndex data ) data [] }
             , Cmd.none
             )
         
         SearchString s ->
-            ( { model | string = s}
-            , Cmd.none
-            )
+            case model.state of
+                Ready index data _ ->
+                    ( { model | string = s, state = 
+                        if String.length model.string < 2
+                        then Ready index data []
+                        else case search data model.string index of
+                            Err _ -> Ready index data []
+                            Ok results ->
+                                Ready index data
+                                    <| List.filter ( filterPred model.filter ) results
+                        }
+                    , Cmd.none
+                    )
+                _ ->
+                    ( { model | string = s }
+                    , Cmd.none
+                    )
         
         ToggleSelectingFitler ->
             ( { model | selectingFilter = not model.selectingFilter }
@@ -365,17 +385,25 @@ update msg model =
             )
         
         FocusItem i ->
-            ( { model | focused = Just i }
+            ( { model | viewState = SingleItem i }
             , Cmd.none
             )
         
-        UnFocusItem ->
-            ( { model | focused = Nothing }
+        ReturnToList ->
+            ( { model | viewState = MainView }
+            , Cmd.none
+            )
+        
+        AboutPressed ->
+            ( { model | viewState = About }
             , Cmd.none
             )
 
 bgColor : Color
 bgColor = rgb255 20 20 20
+
+bgColor2 : Color
+bgColor2 = rgb255 40 40 40
 
 txtColor : Color
 txtColor = rgb255 250 250 250
@@ -439,7 +467,7 @@ viewItemFull closeButton item =
             , if closeButton
                 then Input.button
                     [ focused [], alignTop ]
-                    { onPress = Just UnFocusItem
+                    { onPress = Just ReturnToList
                     , label = text "x"
                     }
                 else none
@@ -517,10 +545,50 @@ view model =
                     }
             else none
         
-        , case model.focused of
-            Just item ->
+        , row
+            [ width fill ]
+            [ el [ width <| px 10 ] none
+            , el
+                [ Background.color bgColor2
+                , width fill
+                , height <| px 1
+                , paddingXY 10 0
+                ]
+                none
+            , el [ width <| px 10 ] none
+            ]
+        
+        , case model.viewState of
+            SingleItem item ->
                 viewItemFull True item
-            Nothing ->
+            
+            About ->
+                column
+                    [ width fill, centerY, spacing 10 ]
+                    [ paragraph
+                        [ centerX, centerY, width <| maximum 600 <| fill ]
+                        [ el
+                            [ alignLeft, padding 8, Font.bold, Font.size 30 ]
+                            <| text "Dresstiny"
+                        , text <|
+                            """
+                            This page will display screenshots and
+                            brief details on almost all equippable items in Destiny 2.
+                            Type in the bar above to search through the items.
+                            You can also filter results, for example to a specific class's gear.
+                            This information is drawn from the Destiny 2 Manifest.
+                            This means it is possible for it to view content that is not yet in the game
+                            if Bungie has not hidden it. Take care if you are avoiding spoilers.
+                            """
+                        ]
+                    , Input.button
+                        [ centerX, padding 5, focused [], Font.bold ]
+                        { onPress = Just ReturnToList
+                        , label = text "Return"
+                        }
+                    ]
+
+            MainView ->
                 el [ width fill, height fill, scrollbarY ] <| case model.state of
                     Error e -> text <| case e of
                         Http.BadUrl s ->
@@ -537,22 +605,34 @@ view model =
                     Loading s ->
                         el [ centerX, centerY ] <| text s
 
-                    Ready index idict ->
+                    Ready _ _ items ->
                         if String.length model.string < 2
                         then el [centerX, centerY ] <| text "Ready to search!"
-                        else case search idict model.string index of
-                            Err _ -> el [centerX, centerY ] <| text "No Results"
+                        else case items of
+                            [] -> el [centerX, centerY ] <| text "No Results"
                             
-                            Ok results ->
-                                case List.filter ( filterPred model.filter ) results of
-                                    [] ->
-                                        el [centerX, centerY ] <| text "No Results"
-                                    [ result ] ->
-                                        viewItemFull False result
-                                    fullList ->
-                                        wrappedRow
-                                            [ centerX ]
-                                            <| List.map
-                                                ( lazy viewItemLite )
-                                                fullList 
+                            [ result ] ->
+                                viewItemFull False result
+                            
+                            fullList ->
+                                wrappedRow
+                                    [ centerX ]
+                                    <| List.map
+                                        ( lazy viewItemLite )
+                                        fullList
+        
+        , row
+            [ Font.size 12, spacing 10, padding 7, centerX, alignBottom ]
+            [ link
+                []
+                { url = "https://github.com/Drowrin/Dresstiny"
+                , label = text "Source Code"
+                }
+            , text "|"
+            , Input.button
+                [ focused [] ]
+                { onPress = Just AboutPressed
+                , label = text "What is this?"
+                }
+            ]
         ]
