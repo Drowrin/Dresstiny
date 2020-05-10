@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Browser
+import Browser.Events
 import Dict exposing (Dict)
 import Html exposing (Html)
 
@@ -17,8 +18,12 @@ import Element.Events as Events
 
 import ElmTextSearch
 
+type alias Flags =
+    { w : Int
+    , h : Int
+    }
 
-main : Program () Model Msg
+main : Program Flags Model Msg
 main = Browser.element
         { init = init
         , view = view
@@ -27,7 +32,8 @@ main = Browser.element
         }
 
 subscriptions : Model -> Sub Msg
-subscriptions _ = Sub.none
+subscriptions _ =
+    Browser.Events.onResize (\w h -> WindowResize w h)
 
 type alias Manifest =
     { presNodeUrl : String
@@ -268,7 +274,10 @@ type ViewState
     | About
 
 type alias Model =
-    { string : String
+    { w : Int
+    , h : Int
+    , device : Device
+    , string : String
     , selectingFilter : Bool
     , filter : FilterType
     , state : State
@@ -276,7 +285,9 @@ type alias Model =
     }
 
 type Msg
-    = GotError ErrorType
+    = WindowResize Int Int
+
+    | GotError ErrorType
 
     | GotManifest Manifest
     | GotPresNodeData Manifest (Dict String PresNode)
@@ -301,20 +312,31 @@ unpack errF okF result =
 root : String
 root = "https://www.bungie.net"
 
-init : () -> (Model, Cmd Msg)
-init _ =
-    ( Model "" False None (Loading "Locating Manifests") MainView
-    , Http.get
-        { url = root ++ "/Platform/Destiny2/Manifest"
-        , expect = Http.expectJson
-            ( unpack GotError GotManifest )
-            decodeManifest
-        }
-    )
+init : Flags -> (Model, Cmd Msg)
+init f =
+    let
+        device = classifyDevice { height = f.h, width = f.w }
+        filter = None
+        dataState = Loading "Locating Manifests"
+        viewState = MainView
+    in
+        ( Model f.w f.h device "" False filter dataState viewState
+        , Http.get
+            { url = root ++ "/Platform/Destiny2/Manifest"
+            , expect = Http.expectJson
+                ( unpack GotError GotManifest )
+                decodeManifest
+            }
+        )
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        WindowResize w h ->
+            ( { model | w = w, h = h }
+            , Cmd.none
+            )
+
         GotError e ->
             ( { model | state = Error e }
             , Cmd.none
@@ -414,10 +436,19 @@ accColor = rgb255 120 120 190
 selColor : Color
 selColor = rgb255 140 140 200
 
-viewItemLite : Item -> Element Msg
-viewItemLite item =
+textSize : Model -> Int
+textSize _ = 20
+
+bigTextSize : Model -> Int
+bigTextSize _ = 30
+
+smallTextSize : Model -> Int
+smallTextSize _ = 12
+
+viewItemLite : Model -> Item -> Element Msg
+viewItemLite model item =
     column
-        [ width <| minimum 450 <| maximum 950 <| fill
+        [ width <| minimum 350 <| maximum 950 <| fill
         , padding 4
         , Events.onClick ( FocusItem item )
         ]
@@ -430,7 +461,7 @@ viewItemLite item =
             [ centerX
             , centerY
             , padding 3
-            , Font.size 12
+            , Font.size <| smallTextSize model
             ]
             <| text item.name
         ]
@@ -488,151 +519,238 @@ viewFilterOption ft =
             <| el [ padding 15 ] <| text <| filterStr ft
     )
 
-view : Model -> Html Msg
-view model =
-    layout
-    [ width fill
-    , height fill
-    , Font.size 20
-    , Font.color txtColor
-    , Background.color bgColor
-    ]
-    <| column [ width fill, height fill ]
-        [ wrappedRow
-            [ width <| minimum 318 <| fill, height <| px 50 ]
-            [ Input.text
+hDivider : Element Msg
+hDivider =
+    row
+        [ width fill ]
+        [ el [ width <| px 10 ] none
+        , el
+            [ Background.color bgColor2
+            , width fill
+            , height <| px 1
+            ]
+            none
+        , el [ width <| px 10 ] none
+        ]
+        
+
+vDivider : Element Msg
+vDivider =
+    column
+        [ height fill ]
+        [ el [ height <| px 10 ] none
+        , el
+            [ Background.color bgColor2
+            , height fill
+            , width <| px 1
+            ]
+            none
+        , el [ height <| px 10 ] none
+        ]
+
+viewHeader : Model -> Element Msg
+viewHeader model =
+    let
+        headerRowHeight = px 50
+
+        input =
+            Input.text
                 [ width fill
+                , height headerRowHeight
                 , Background.color bgColor
                 , Border.width 0
-                , Border.color accColor
-                , Border.rounded 0
                 , focused []
                 , Input.focusedOnLoad
+                , Element.paddingEach { top = 15, right = 15, bottom = 0, left = 15 }
                 ]
                 { onChange = SearchString
                 , text = model.string
-                , placeholder = Just <| Input.placeholder [] <| text " Search..."
+                , placeholder = Just <| Input.placeholder [] <| text <| "Search..."
                 , label = Input.labelHidden "Search Box"
                 }
-
-            , row
+        
+        filterbox = row
+            [ width fill
+            , height headerRowHeight
+            , Background.color <|
+                if model.selectingFilter 
+                then accColor
+                else bgColor
+            , Events.onClick ToggleSelectingFitler
+            ]
+            [ el
                 [ width fill
                 , height fill
-                , Background.color <|
-                    if model.selectingFilter 
-                    then accColor
-                    else bgColor
+                , centerY
+                , padding 15
                 ]
-                [ el
-                    [ width fill, height fill, Events.onClick ToggleSelectingFitler ]
-                    <| el [ centerY, padding 15 ] <| text <| filterStr model.filter
-                , Input.button
-                    [ focused [], padding 10 ]
-                    { onPress = Just (FilterSelected None)
-                    , label = text "x"
-                    }
-                ]
+                <| text <| filterStr model.filter
+            , Input.button
+                [ focused [], padding 10 ]
+                { onPress = Just (FilterSelected None)
+                , label = text "x"
+                }
             ]
         
-        , if model.selectingFilter
-            then el [ Background.color accColor, width fill ] <|
-                Input.radioRow
-                    [ height <| px 50, spacing 10 ]
+        filterSelect =
+            if model.selectingFilter
+            then row
+                [ width fill ] 
+                [ Input.radioRow
+                    [ height headerRowHeight
+                    , width fill
+                    , spacing 10
+                    , Background.color accColor
+                    ]
                     { onChange = FilterSelected
                     , selected = Just model.filter
                     , label = Input.labelHidden "Filter Selection"
                     , options = List.map viewFilterOption validFilters
                     }
+                ]
+            
             else none
         
-        , row
-            [ width fill ]
-            [ el [ width <| px 10 ] none
-            , el
-                [ Background.color bgColor2
-                , width fill
-                , height <| px 1
-                , paddingXY 10 0
+        headerRow = case ( model.device.class, model.device.orientation ) of
+            ( Phone, Portrait ) -> False
+            _ -> model.w >= 600
+    
+    in
+        if headerRow
+        then column
+            [ width fill, height shrink ]
+            [ row
+                [ width fill
+                , height shrink
                 ]
-                none
-            , el [ width <| px 10 ] none
+                [ input
+                , vDivider
+                , filterbox
+                ]
+            
+            , filterSelect
             ]
+
+        else column
+            [ width fill, height shrink ]
+            [ input
+            , hDivider
+            , filterbox
+            , filterSelect
+            ]
+            
+
+viewAbout : Model -> Element Msg
+viewAbout model =
+    column
+        [ width fill, centerY, spacing 10 ]
+        [ paragraph
+            [ centerX, centerY, width <| maximum 600 <| fill ]
+            [ el
+                [ alignLeft, padding 8, Font.bold, Font.size <| bigTextSize model ]
+                <| text "Dresstiny"
+            , text <|
+                """
+                This page will display screenshots and
+                brief details on almost all equippable items in Destiny 2.
+                Type in the bar above to search through the items.
+                You can also filter results, for example to a specific class's gear.
+                This information is drawn from the Destiny 2 Manifest.
+                This means it is possible for it to view content that is not yet in the game
+                if Bungie has not hidden it. Take care if you are avoiding spoilers.
+                """
+            ]
+        , Input.button
+            [ centerX, padding 5, focused [], Font.bold ]
+            { onPress = Just ReturnToList
+            , label = text "Return"
+            }
+        ]
+
+viewError : Model -> ErrorType -> Element Msg
+viewError _ e =
+    text <| case e of
+        Http.BadUrl s ->
+            "BAD URL: " ++ s
+        Http.Timeout -> 
+            "TIMEOUT"
+        Http.NetworkError ->
+            "NETWORK ERROR"
+        Http.BadStatus i ->
+            "BAD STATUS: " ++ String.fromInt i
+        Http.BadBody s ->
+            "BAD BODY: " ++ s
+
+viewFooter : Model -> Element Msg
+viewFooter model =
+    row
+        [ Font.size <| smallTextSize model, spacing 10, padding 7, centerX, alignBottom ]
+        [ link
+            []
+            { url = "https://github.com/Drowrin/Dresstiny"
+            , label = text "Source Code"
+            }
+        , text "|"
+        , Input.button
+            [ focused [] ]
+            { onPress = Just AboutPressed
+            , label = text "What is this?"
+            }
+        ]
+
+view : Model -> Html Msg
+view model =
+    layout
+    [ width fill
+    , height fill
+    , Font.size <| textSize model
+    , Font.color txtColor
+    , Background.color bgColor
+    ]
+    <| column
+        [ width fill
+        , height fill
+        ]
+        [ viewHeader model
+        
+        , hDivider
         
         , case model.viewState of
-            SingleItem item ->
-                viewItemFull True item
+            SingleItem item -> viewItemFull True item
             
-            About ->
-                column
-                    [ width fill, centerY, spacing 10 ]
-                    [ paragraph
-                        [ centerX, centerY, width <| maximum 600 <| fill ]
-                        [ el
-                            [ alignLeft, padding 8, Font.bold, Font.size 30 ]
-                            <| text "Dresstiny"
-                        , text <|
-                            """
-                            This page will display screenshots and
-                            brief details on almost all equippable items in Destiny 2.
-                            Type in the bar above to search through the items.
-                            You can also filter results, for example to a specific class's gear.
-                            This information is drawn from the Destiny 2 Manifest.
-                            This means it is possible for it to view content that is not yet in the game
-                            if Bungie has not hidden it. Take care if you are avoiding spoilers.
-                            """
-                        ]
-                    , Input.button
-                        [ centerX, padding 5, focused [], Font.bold ]
-                        { onPress = Just ReturnToList
-                        , label = text "Return"
-                        }
-                    ]
+            About -> viewAbout model
 
-            MainView ->
-                el [ width fill, height fill, scrollbarY ] <| case model.state of
-                    Error e -> text <| case e of
-                        Http.BadUrl s ->
-                            "BAD URL: " ++ s
-                        Http.Timeout -> 
-                            "TIMEOUT"
-                        Http.NetworkError ->
-                            "NETWORK ERROR"
-                        Http.BadStatus i ->
-                            "BAD STATUS: " ++ String.fromInt i
-                        Http.BadBody s ->
-                            "BAD BODY: " ++ s
+            MainView -> el [ width fill, height fill, scrollbarY ]
+                <| case model.state of
+                    Error e -> viewError model e
                     
                     Loading s ->
-                        el [ centerX, centerY ] <| text s
+                        el
+                        [ centerX
+                        , centerY
+                        ]
+                        <| paragraph
+                            []
+                            [ text s
+                            ]
 
                     Ready _ _ items ->
                         if String.length model.string < 2
-                        then el [centerX, centerY ] <| text "Ready to search!"
-                        else case items of
-                            [] -> el [centerX, centerY ] <| text "No Results"
-                            
-                            [ result ] ->
-                                viewItemFull False result
-                            
-                            fullList ->
-                                wrappedRow
-                                    [ centerX ]
-                                    <| List.map
-                                        ( lazy viewItemLite )
-                                        fullList
+                        then
+                            el [centerX, centerY ] <| text "Ready to search!"
+                        else
+                            case items of
+                                [] -> el [centerX, centerY ] <| text "No Results"
+                                
+                                [ result ] ->
+                                    viewItemFull False result
+                                
+                                fullList ->
+                                    wrappedRow
+                                        [ centerX ]
+                                        <| List.map
+                                            ( lazy <| viewItemLite model )
+                                            fullList
         
-        , row
-            [ Font.size 12, spacing 10, padding 7, centerX, alignBottom ]
-            [ link
-                []
-                { url = "https://github.com/Drowrin/Dresstiny"
-                , label = text "Source Code"
-                }
-            , text "|"
-            , Input.button
-                [ focused [] ]
-                { onPress = Just AboutPressed
-                , label = text "What is this?"
-                }
-            ]
+        , viewFooter model   
         ]
