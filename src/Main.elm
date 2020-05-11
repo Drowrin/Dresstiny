@@ -1,13 +1,23 @@
-module Main exposing (main)
+port module Main exposing (main)
 
 import Browser
 import Browser.Events
-import Dict exposing (Dict)
 import Html exposing (Html)
+import Json.Decode exposing (errorToString)
 
-import Http
-
-import Element exposing (..)
+import Element exposing (
+    Element, el, none, layout,
+    Device, classifyDevice, DeviceClass(..), Orientation(..),
+    Color, rgb255,
+    row, column, wrappedRow,
+    width, height, minimum, maximum, fill, shrink, px,
+    scrollbarY,
+    centerX, centerY,
+    padding, spacing, paddingXY,
+    focused,
+    alignTop, alignLeft, alignBottom,
+    text, image, paragraph, link
+    )
 import Element.Input as Input
 import Element.Font as Font
 import Element.Background as Background
@@ -15,13 +25,13 @@ import Element.Border as Border
 import Element.Lazy exposing (lazy)
 import Element.Events as Events
 
-import ElmTextSearch
-
-import ApiModels exposing(
-    Item, decodeItems,
-    Manifest, decodeManifest,
-    PresNode, decodePresNodes,
-    Collectible, decodeCollectibles
+import ApiModel exposing (
+    Item, root
+    )
+import Shared exposing (
+    FilterType(..), filterStr, validFilters,
+    OutPortData(..), encodeOutPortData,
+    InPortData(..), decodeInPortData
     )
 
 type alias Flags =
@@ -37,95 +47,24 @@ main = Browser.element
         , subscriptions = subscriptions
         }
 
+port sendPort : String -> Cmd msg
+port recvPort : (String -> msg) -> Sub msg
+
 subscriptions : Model -> Sub Msg
 subscriptions _ =
-    Browser.Events.onResize (\w h -> WindowResize w h)
+    Sub.batch
+        [ Browser.Events.onResize (\w h -> WindowResize w h)
+        , recvPort GotPortMessage
+        ]
 
-type alias ErrorType = Http.Error
-type alias Data = Dict String Item
-
-type alias Index = ElmTextSearch.Index Item
-
-foldData : String -> Item -> Index -> Index
-foldData _ item index =
-    let
-        r = ElmTextSearch.add item index
-    in
-        case r of
-            Ok i -> i
-            Err _ -> index
-
-createIndex : Data -> Index
-createIndex data =
-    Dict.foldl foldData
-    ( ElmTextSearch.new
-        { ref = .hash
-        , fields =
-            [ ( .name, 4.0 )
-            , ( .source, 2.0 )
-            , ( .description, 1.0 )
-            ]
-        , listFields =
-            [ ( .sets, 3.0 )
-            ]
-        }
-    )
-    data
-
-sortFold : Dict String Item -> (String, Float) -> List Item -> List Item
-sortFold idict t l =
-    case Dict.get ( Tuple.first t ) idict of
-        Just i -> i :: l
-        Nothing -> l
-
-resultToSortedItems : Dict String Item -> List (String, Float) -> List Item
-resultToSortedItems idict l =
-    List.foldl ( sortFold idict ) [] ( List.sortBy Tuple.second l )
-        
-
-search : Dict String Item -> String -> Index -> Result String ( List Item )
-search idict string index =
-    Result.map
-        (\t -> resultToSortedItems idict <| Tuple.second t )
-        <| ElmTextSearch.search string index
-
-type FilterType
-    = None
-    | Hunter
-    | Warlock
-    | Titan
-
-validFilters : List FilterType
-validFilters = [ Hunter, Warlock, Titan ]
-
-filterStr : FilterType -> String
-filterStr ft =
-    case ft of
-        None ->
-            "No Filter"
-        Hunter ->
-            "Hunter"
-        Warlock ->
-            "Warlock"
-        Titan ->
-            "Titan"
-
-filterPred : FilterType -> ( Item -> Bool )
-filterPred ft =
-    case ft of
-        None ->
-            (\_ -> True)
-        Hunter ->
-            (\i -> i.classType == 1)
-        Warlock ->
-            (\i -> i.classType == 2)
-        Titan ->
-            (\i -> i.classType == 0)
+type SyncState
+    = Synced
+    | Getting String
 
 type State
-    = Error ErrorType
+    = Error String
     | Loading String
-    | Ready Index Data (List Item)
+    | Ready SyncState
 
 type ViewState
     = MainView
@@ -136,9 +75,13 @@ type alias Model =
     { w : Int
     , h : Int
     , device : Device
+
     , string : String
+    , results : List Item
+
     , selectingFilter : Bool
     , filter : FilterType
+
     , state : State
     , viewState : ViewState
     }
@@ -146,12 +89,7 @@ type alias Model =
 type Msg
     = WindowResize Int Int
 
-    | GotError ErrorType
-
-    | GotManifest Manifest
-    | GotPresNodeData Manifest (Dict String PresNode)
-    | GotCollectibleData Manifest (Dict String Collectible)
-    | GotItemData Data
+    | GotPortMessage String
 
     | SearchString String
 
@@ -162,15 +100,6 @@ type Msg
     | FocusItem Item
     | AboutPressed
 
-unpack : (e -> b) -> (a -> b) -> Result e a -> b
-unpack errF okF result =
-    case result of
-        Ok ok -> okF ok
-        Err err -> errF err
-
-root : String
-root = "https://www.bungie.net"
-
 init : Flags -> (Model, Cmd Msg)
 init f =
     let
@@ -179,13 +108,8 @@ init f =
         dataState = Loading "Locating Manifests"
         viewState = MainView
     in
-        ( Model f.w f.h device "" False filter dataState viewState
-        , Http.get
-            { url = root ++ "/Platform/Destiny2/Manifest"
-            , expect = Http.expectJson
-                ( unpack GotError GotManifest )
-                decodeManifest
-            }
+        ( Model f.w f.h device "" [] False filter dataState viewState
+        , Cmd.none
         )
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -195,61 +119,69 @@ update msg model =
             ( { model | w = w, h = h }
             , Cmd.none
             )
-
-        GotError e ->
-            ( { model | state = Error e }
-            , Cmd.none
-            )
         
-        GotManifest manifest ->
-            ( { model | state = Loading "Loading Sets" }
-            , Http.get
-                { url = root ++ manifest.presNodeUrl
-                , expect = Http.expectJson
-                    ( unpack GotError ( GotPresNodeData manifest ) )
-                    decodePresNodes
-                }
-            )
-        
-        GotPresNodeData manifest pdict ->
-            ( { model | state = Loading "Item Sources" }
-            , Http.get
-                { url = root ++ manifest.collectibleUrl
-                , expect = Http.expectJson
-                    ( unpack GotError ( GotCollectibleData manifest ) )
-                    ( decodeCollectibles pdict )
-                }
-            )
-        
-        GotCollectibleData manifest cdict ->
-            ( { model | state = Loading "Loading Items. This may take some time." }
-            , Http.get
-                { url = root ++ manifest.itemDefUrl
-                , expect = Http.expectJson
-                    ( unpack GotError GotItemData )
-                    ( decodeItems cdict )
-                }
-            )
-        
-        GotItemData data ->
-            ( { model | state = Ready ( createIndex data ) data [] }
-            , Cmd.none
-            )
+        GotPortMessage message ->
+            case decodeInPortData message of
+                Err e ->
+                    ( { model | state = Error <| errorToString e }
+                    , Cmd.none
+                    )
+                Ok ipd ->
+                    case ipd of
+                        PortError e ->
+                            ( { model | state = Error e }
+                            , Cmd.none
+                            )
+                        
+                        Status s r ->
+                            if r
+                            then
+                                ( { model | state = Ready Synced }
+                                , Cmd.none
+                                )
+                            else
+                                ( { model | state = Loading s }
+                                , Cmd.none
+                                )
+                        
+                        Results items ->
+                            case model.state of
+                                Ready (Getting s) ->
+                                    if s == model.string
+                                    then
+                                        ( { model
+                                            | state = Ready Synced
+                                            , results = items
+                                          }
+                                        , Cmd.none
+                                        )
+                                    else
+                                        ( { model
+                                            | state = Ready <| Getting model.string
+                                            , results = items
+                                          }
+                                        , sendPort <| encodeOutPortData <| Query model.string
+                                        )
+                                _ ->
+                                    ( { model
+                                        | state = Ready Synced
+                                        , results = items
+                                      }
+                                    , Cmd.none
+                                    )
         
         SearchString s ->
             case model.state of
-                Ready index data _ ->
-                    ( { model | string = s, state = 
-                        if String.length model.string < 2
-                        then Ready index data []
-                        else case search data model.string index of
-                            Err _ -> Ready index data []
-                            Ok results ->
-                                Ready index data
-                                    <| List.filter ( filterPred model.filter ) results
-                        }
-                    , Cmd.none
-                    )
+                Ready Synced ->
+                    if String.length model.string < 2
+                    then
+                        ( { model | string = s }
+                        , Cmd.none
+                        )
+                    else
+                        ( { model | string = s, state = Ready <| Getting s }
+                        , sendPort <| encodeOutPortData <| Query s
+                        )
                 _ ->
                     ( { model | string = s }
                     , Cmd.none
@@ -262,7 +194,7 @@ update msg model =
         
         FilterSelected ft ->
             ( { model | selectingFilter = False, filter = ft }
-            , Cmd.none
+            , sendPort <| encodeOutPortData <| Filter ft
             )
         
         FocusItem i ->
@@ -526,20 +458,6 @@ viewAbout model =
             }
         ]
 
-viewError : Model -> ErrorType -> Element Msg
-viewError _ e =
-    text <| case e of
-        Http.BadUrl s ->
-            "BAD URL: " ++ s
-        Http.Timeout -> 
-            "TIMEOUT"
-        Http.NetworkError ->
-            "NETWORK ERROR"
-        Http.BadStatus i ->
-            "BAD STATUS: " ++ String.fromInt i
-        Http.BadBody s ->
-            "BAD BODY: " ++ s
-
 viewFooter : Model -> Element Msg
 viewFooter model =
     row
@@ -581,7 +499,7 @@ view model =
 
             MainView -> el [ width fill, height fill, scrollbarY ]
                 <| case model.state of
-                    Error e -> viewError model e
+                    Error e -> text e
                     
                     Loading s ->
                         el
@@ -593,18 +511,19 @@ view model =
                             [ text s
                             ]
 
-                    Ready _ _ items ->
+                    Ready syncstate ->
                         if String.length model.string < 2
                         then
                             el [centerX, centerY ] <| text "Ready to search!"
                         else
-                            case items of
-                                [] -> el [centerX, centerY ] <| text "No Results"
+                            case ( model.results, syncstate ) of
+                                ( [], Synced ) -> el [ centerX, centerY ] <| text "No Results"
+                                ( [], Getting _ ) -> el [ centerX, centerY ] <| text "Searching..."
                                 
-                                [ result ] ->
+                                ( [ result ], _ ) ->
                                     viewItemFull False result
                                 
-                                fullList ->
+                                ( fullList, _ ) ->
                                     wrappedRow
                                         [ centerX ]
                                         <| List.map

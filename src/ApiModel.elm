@@ -1,9 +1,18 @@
-module ApiModels exposing (..)
+module ApiModel exposing (
+    root,
+    Manifest, decodeManifest,
+    Item, decodeItems, encodeItem, decodeItem,
+    PresNode, decodePresNodes,
+    Collectible, decodeCollectibles
+    )
 
 import Dict exposing (Dict)
 
 import Json.Decode as Decode exposing (Decoder, at, field, list, dict, maybe, string, int)
+import Json.Encode as Encode
 
+root : String
+root = "https://www.bungie.net"
 
 type alias Manifest =
     { presNodeUrl : String
@@ -38,6 +47,31 @@ type alias Item =
     , source : String
     , sets : List String
     }
+
+encodeItem : Item -> Encode.Value
+encodeItem item =
+    Encode.object
+        [ ( "hash", Encode.string item.hash )
+        , ( "name", Encode.string item.name )
+        , ( "icon", Encode.string item.icon )
+        , ( "screenshot", Encode.string item.screenshot )
+        , ( "description", Encode.string item.description )
+        , ( "classType", Encode.int item.classType )
+        , ( "source", Encode.string item.source )
+        , ( "sets", Encode.list Encode.string item.sets )
+        ]
+
+decodeItem : Decoder Item
+decodeItem =
+    Decode.map8 Item
+        ( field "hash" string )
+        ( field "name" string )
+        ( field "icon" string )
+        ( field "screenshot" string )
+        ( field "description" string )
+        ( field "classType" int )
+        ( field "source" string )
+        ( field "sets" <| list string)
 
 decodeRawItem : Decoder RawItem
 decodeRawItem =
