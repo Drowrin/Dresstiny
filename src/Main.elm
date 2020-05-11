@@ -16,7 +16,8 @@ import Element exposing (
     padding, spacing, paddingXY,
     focused,
     alignTop, alignLeft, alignBottom,
-    text, image, paragraph, link
+    text, image, paragraph, link,
+    pointer
     )
 import Element.Input as Input
 import Element.Font as Font
@@ -240,8 +241,8 @@ viewItemLite : Model -> Item -> Element Msg
 viewItemLite model item =
     column
         [ width <| minimum 350 <| maximum 950 <| fill
-        , padding 4
         , Events.onClick ( FocusItem item )
+        , pointer
         ]
         [ image
             [ width fill ]
@@ -254,7 +255,7 @@ viewItemLite model item =
             , padding 3
             , Font.size <| smallTextSize model
             ]
-            <| text item.name
+            <| text <| String.join " | " ( item.name :: item.sets )
         ]
 
 viewItemFull : Bool -> Item -> Element Msg
@@ -280,7 +281,8 @@ viewItemFull closeButton item =
             
             , paragraph
                 [ padding 15 ]
-                [ el [ Font.bold ] <| text item.name
+                [ el [ Font.bold ] <|
+                    text <| String.join " | " ( item.name :: item.sets )
                 , paragraph
                     []
                     [ text item.description ]
@@ -294,6 +296,10 @@ viewItemFull closeButton item =
                     }
                 else none
             ]
+        
+        , paragraph
+            [ centerX ]
+            [ text item.source ]
         ]
 
 viewFilterOption : FilterType -> Input.Option FilterType Msg
@@ -525,7 +531,7 @@ view model =
                                 
                                 ( fullList, _ ) ->
                                     wrappedRow
-                                        [ centerX ]
+                                        [ centerX, spacing 8 ]
                                         <| List.map
                                             ( lazy <| viewItemLite model )
                                             fullList

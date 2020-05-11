@@ -13854,7 +13854,11 @@ var $author$project$Main$viewItemFull = F2(
 									$mdgriffith$elm_ui$Element$el,
 									_List_fromArray(
 										[$mdgriffith$elm_ui$Element$Font$bold]),
-									$mdgriffith$elm_ui$Element$text(item.ak)),
+									$mdgriffith$elm_ui$Element$text(
+										A2(
+											$elm$core$String$join,
+											' | ',
+											A2($elm$core$List$cons, item.ak, item.a2)))),
 									A2(
 									$mdgriffith$elm_ui$Element$paragraph,
 									_List_Nil,
@@ -13874,6 +13878,14 @@ var $author$project$Main$viewItemFull = F2(
 								N: $mdgriffith$elm_ui$Element$text('x'),
 								aD: $elm$core$Maybe$Just($author$project$Main$ReturnToList)
 							}) : $mdgriffith$elm_ui$Element$none
+						])),
+					A2(
+					$mdgriffith$elm_ui$Element$paragraph,
+					_List_fromArray(
+						[$mdgriffith$elm_ui$Element$centerX]),
+					_List_fromArray(
+						[
+							$mdgriffith$elm_ui$Element$text(item.G)
 						]))
 				]));
 	});
@@ -13899,9 +13911,9 @@ var $author$project$Main$viewItemLite = F2(
 						$mdgriffith$elm_ui$Element$minimum,
 						350,
 						A2($mdgriffith$elm_ui$Element$maximum, 950, $mdgriffith$elm_ui$Element$fill))),
-					$mdgriffith$elm_ui$Element$padding(4),
 					$mdgriffith$elm_ui$Element$Events$onClick(
-					$author$project$Main$FocusItem(item))
+					$author$project$Main$FocusItem(item)),
+					$mdgriffith$elm_ui$Element$pointer
 				]),
 			_List_fromArray(
 				[
@@ -13925,7 +13937,11 @@ var $author$project$Main$viewItemLite = F2(
 							$mdgriffith$elm_ui$Element$Font$size(
 							$author$project$Main$smallTextSize(model))
 						]),
-					$mdgriffith$elm_ui$Element$text(item.ak))
+					$mdgriffith$elm_ui$Element$text(
+						A2(
+							$elm$core$String$join,
+							' | ',
+							A2($elm$core$List$cons, item.ak, item.a2))))
 				]));
 	});
 var $mdgriffith$elm_ui$Internal$Model$Padding = F5(
@@ -14190,7 +14206,10 @@ var $author$project$Main$view = function (model) {
 														return A2(
 															$mdgriffith$elm_ui$Element$wrappedRow,
 															_List_fromArray(
-																[$mdgriffith$elm_ui$Element$centerX]),
+																[
+																	$mdgriffith$elm_ui$Element$centerX,
+																	$mdgriffith$elm_ui$Element$spacing(8)
+																]),
 															A2(
 																$elm$core$List$map,
 																$mdgriffith$elm_ui$Element$Lazy$lazy(
