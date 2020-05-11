@@ -40,7 +40,7 @@ type FilterType
     | Titan
 
 validFilters : List FilterType
-validFilters = [ Hunter, Warlock, Titan ]
+validFilters = [ None, Hunter, Warlock, Titan ]
 
 filterStr : FilterType -> String
 filterStr ft =

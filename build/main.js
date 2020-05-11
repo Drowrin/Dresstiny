@@ -13581,7 +13581,7 @@ var $author$project$Shared$Hunter = 1;
 var $author$project$Shared$Titan = 3;
 var $author$project$Shared$Warlock = 2;
 var $author$project$Shared$validFilters = _List_fromArray(
-	[1, 2, 3]);
+	[0, 1, 2, 3]);
 var $mdgriffith$elm_ui$Element$Input$Option = F2(
 	function (a, b) {
 		return {$: 0, a: a, b: b};
