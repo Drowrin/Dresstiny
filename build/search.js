@@ -5738,11 +5738,43 @@ var $author$project$ApiModel$decodeRawPresNode = A2(
 	'displayProperties',
 	$elm$json$Json$Decode$maybe(
 		A2($elm$json$Json$Decode$field, 'name', $elm$json$Json$Decode$string)));
+var $elm$core$List$any = F2(
+	function (isOkay, list) {
+		any:
+		while (true) {
+			if (!list.b) {
+				return false;
+			} else {
+				var x = list.a;
+				var xs = list.b;
+				if (isOkay(x)) {
+					return true;
+				} else {
+					var $temp$isOkay = isOkay,
+						$temp$list = xs;
+					isOkay = $temp$isOkay;
+					list = $temp$list;
+					continue any;
+				}
+			}
+		}
+	});
+var $elm$core$List$member = F2(
+	function (x, xs) {
+		return A2(
+			$elm$core$List$any,
+			function (a) {
+				return _Utils_eq(a, x);
+			},
+			xs);
+	});
+var $author$project$ApiModel$setBlackList = _List_fromArray(
+	['Hunter', 'Warlock', 'Titan']);
 var $author$project$ApiModel$resolvePresNode = F3(
 	function (hash, rp, accumulator) {
 		if (!rp.$) {
 			var p = rp.a;
-			return A3($elm$core$Dict$insert, hash, p, accumulator);
+			return (!A2($elm$core$List$member, p, $author$project$ApiModel$setBlackList)) ? A3($elm$core$Dict$insert, hash, p, accumulator) : accumulator;
 		} else {
 			return accumulator;
 		}
@@ -5879,27 +5911,6 @@ var $author$project$Search$resultToSortedItems = F2(
 			$author$project$Search$sortFold(idict),
 			_List_Nil,
 			A2($elm$core$List$sortBy, $elm$core$Tuple$second, l));
-	});
-var $elm$core$List$any = F2(
-	function (isOkay, list) {
-		any:
-		while (true) {
-			if (!list.b) {
-				return false;
-			} else {
-				var x = list.a;
-				var xs = list.b;
-				if (isOkay(x)) {
-					return true;
-				} else {
-					var $temp$isOkay = isOkay,
-						$temp$list = xs;
-					isOkay = $temp$isOkay;
-					list = $temp$list;
-					continue any;
-				}
-			}
-		}
 	});
 var $rluiten$trie$TrieModel$getNodeCore = F2(
 	function (key, trie) {

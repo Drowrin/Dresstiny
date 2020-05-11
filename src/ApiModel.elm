@@ -8,11 +8,16 @@ module ApiModel exposing (
 
 import Dict exposing (Dict)
 
-import Json.Decode as Decode exposing (Decoder, at, field, list, dict, maybe, string, int)
+import Json.Decode as Decode exposing (
+    Decoder, at, field, list, dict, maybe, string, int
+    )
 import Json.Encode as Encode
 
 root : String
 root = "https://www.bungie.net"
+
+setBlackList : List String
+setBlackList = [ "Hunter", "Warlock", "Titan" ]
 
 type alias Manifest =
     { presNodeUrl : String
@@ -172,7 +177,9 @@ resolvePresNode : String -> RawPresNode -> Dict String PresNode -> Dict String P
 resolvePresNode hash rp accumulator =
     case rp of
         Just p ->
-            Dict.insert hash p accumulator
+            if not <| List.member p setBlackList
+            then Dict.insert hash p accumulator
+            else accumulator
         Nothing ->
             accumulator
 
