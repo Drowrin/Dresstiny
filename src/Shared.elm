@@ -73,7 +73,7 @@ filterPred ft =
 type InPortData
     = PortError String
     | Status String Bool
-    | Results (List Item)
+    | Results Bool (List Item)
 
 encodeInPortData : InPortData -> String
 encodeInPortData d =
@@ -89,8 +89,12 @@ encodeInPortData d =
                     ]
                 ) ]
             
-            Results list ->
-                [ ( "Results", Encode.list encodeItem list ) ]
+            Results b list ->
+                [ ( "Results", Encode.object
+                    [ ( "validSearch", Encode.bool b )
+                    , ( "items", Encode.list encodeItem list)
+                    ]
+                ) ]
 
 decodeInPortData : String -> Result Decode.Error InPortData
 decodeInPortData s =
@@ -102,8 +106,10 @@ decodeInPortData s =
                 <| Decode.map2 Status
                     ( Decode.field "message" Decode.string )
                     ( Decode.field "ready" Decode.bool )
-            , Decode.map Results
-                ( Decode.field "Results" <| Decode.list decodeItem )
+            , Decode.field "Results"
+                <| Decode.map2 Results
+                ( Decode.field "validSearch" Decode.bool )
+                ( Decode.field "items" <| Decode.list decodeItem )
             ]
         )
         s
@@ -117,16 +123,23 @@ encodeOutPortData d =
     Encode.encode 0
         <| Encode.object <| case d of
             Query s ->
-                [ ( "Query", Encode.string s ) ]
+                [ ( "Query", Encode.object
+                    [ ( "string", Encode.string s )
+                    ]
+                  )
+                ]
             Filter ft ->
                 [ ( "Filter", Encode.string <| filterStr ft ) ]
+            
 
 decodeOutPortData : String -> Result Decode.Error OutPortData
 decodeOutPortData s =
     Decode.decodeString
         ( Decode.oneOf
             [ Decode.field "Query"
-                ( Decode.map Query Decode.string )
+                ( Decode.map Query
+                    ( Decode.field "string" Decode.string )
+                )
             , Decode.field "Filter"
                 ( Decode.map Filter <| Decode.map ifilterStr <| Decode.string )
             ]

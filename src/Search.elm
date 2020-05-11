@@ -87,11 +87,12 @@ type alias Model =
     , string : String
     , filter : FilterType
     , fullResults : List Item
+    , allItems : List Item
     }
 
 init : () -> ( Model, Cmd Msg )
 init _ =
-    ( Model Loading "" None []
+    ( Model Loading "" None [] []
     , Cmd.batch
         [ Http.get
             { url = root ++ "/Platform/Destiny2/Manifest"
@@ -177,7 +178,7 @@ update msg model =
             )
         
         GotItemData data ->
-            ( model
+            ( { model | allItems = Dict.values data }
             , Cmd.batch
                 [ do (IndexData data)
                 , sendPort <| encodeInPortData <| Status "Indexing Data, this may take some time" False
@@ -196,9 +197,15 @@ update msg model =
                     , sendPort <| encodeInPortData <| PortError <| errorToString e
                     )
                 Ok ( Query s ) -> 
-                    ( { model | string = s }
-                    , do DoSearch
-                    )
+                    if String.length s <= 2
+                    then
+                        ( { model | string = s, fullResults = [] }
+                        , do DoFilter
+                        )
+                    else
+                        ( { model | string = s }
+                        , do DoSearch
+                        )
                         
                 Ok ( Filter f ) ->
                     ( { model | filter = f }
@@ -218,7 +225,12 @@ update msg model =
 
         
         DoFilter ->
-            let res = List.filter (filterPred model.filter) model.fullResults
+            let
+                fres = 
+                    if ( not <| model.filter == None ) && List.isEmpty model.fullResults
+                    then model.allItems
+                    else model.fullResults
+                res = List.filter (filterPred model.filter) fres
             in
                 ( model
                 , do (SendResults res)
@@ -226,6 +238,8 @@ update msg model =
         
         SendResults res ->
             ( model
-            , sendPort <| encodeInPortData <| Results res
+            , sendPort <| encodeInPortData <| Results
+                ( ( String.length model.string > 2)  || ( not <| model.filter == None ) )
+                res
             )
 

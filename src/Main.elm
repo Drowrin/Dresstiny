@@ -79,6 +79,7 @@ type alias Model =
 
     , string : String
     , results : List Item
+    , validSearch : Bool
 
     , selectingFilter : Bool
     , filter : FilterType
@@ -109,7 +110,7 @@ init f =
         dataState = Loading "Locating Manifests"
         viewState = MainView
     in
-        ( Model f.w f.h device "" [] False filter dataState viewState
+        ( Model f.w f.h device "" [] False False filter dataState viewState
         , Cmd.none
         )
 
@@ -145,7 +146,7 @@ update msg model =
                                 , Cmd.none
                                 )
                         
-                        Results items ->
+                        Results validSearch items ->
                             case model.state of
                                 Ready (Getting s) ->
                                     if s == model.string
@@ -153,6 +154,7 @@ update msg model =
                                         ( { model
                                             | state = Ready Synced
                                             , results = items
+                                            , validSearch = validSearch
                                           }
                                         , Cmd.none
                                         )
@@ -160,13 +162,16 @@ update msg model =
                                         ( { model
                                             | state = Ready <| Getting model.string
                                             , results = items
+                                            , validSearch = validSearch
                                           }
-                                        , sendPort <| encodeOutPortData <| Query model.string
+                                        , sendPort <| encodeOutPortData <|
+                                            Query model.string
                                         )
                                 _ ->
                                     ( { model
                                         | state = Ready Synced
                                         , results = items
+                                        , validSearch = validSearch
                                       }
                                     , Cmd.none
                                     )
@@ -174,15 +179,9 @@ update msg model =
         SearchString s ->
             case model.state of
                 Ready Synced ->
-                    if String.length model.string < 2
-                    then
-                        ( { model | string = s }
-                        , Cmd.none
-                        )
-                    else
-                        ( { model | string = s, state = Ready <| Getting s }
-                        , sendPort <| encodeOutPortData <| Query s
-                        )
+                    ( { model | string = s }
+                    , sendPort <| encodeOutPortData <| Query s
+                    )
                 _ ->
                     ( { model | string = s }
                     , Cmd.none
@@ -525,7 +524,7 @@ view model =
                             ]
 
                     Ready syncstate ->
-                        if String.length model.string < 2
+                        if not model.validSearch
                         then
                             el [centerX, centerY ] <| text "Ready to search!"
                         else

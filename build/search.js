@@ -519,11 +519,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.a$.af === region.bg.af)
+	if (region.a1.ah === region.bh.ah)
 	{
-		return 'on line ' + region.a$.af;
+		return 'on line ' + region.a1.ah;
 	}
-	return 'on lines ' + region.a$.af + ' through ' + region.bg.af;
+	return 'on lines ' + region.a1.ah + ' through ' + region.bh.ah;
 }
 
 
@@ -1857,9 +1857,9 @@ var _Platform_worker = F4(function(impl, flagDecoder, debugMetadata, args)
 	return _Platform_initialize(
 		flagDecoder,
 		args,
-		impl.c_,
-		impl.d4,
-		impl.dL,
+		impl.c$,
+		impl.d5,
+		impl.dM,
 		function() { return function() {} }
 	);
 });
@@ -2366,25 +2366,25 @@ var _Http_toTask = F3(function(router, toTask, request)
 	return _Scheduler_binding(function(callback)
 	{
 		function done(response) {
-			callback(toTask(request.au.a(response)));
+			callback(toTask(request.ax.a(response)));
 		}
 
 		var xhr = new XMLHttpRequest();
 		xhr.addEventListener('error', function() { done($elm$http$Http$NetworkError_); });
 		xhr.addEventListener('timeout', function() { done($elm$http$Http$Timeout_); });
-		xhr.addEventListener('load', function() { done(_Http_toResponse(request.au.b, xhr)); });
-		$elm$core$Maybe$isJust(request.bX) && _Http_track(router, xhr, request.bX.a);
+		xhr.addEventListener('load', function() { done(_Http_toResponse(request.ax.b, xhr)); });
+		$elm$core$Maybe$isJust(request.bY) && _Http_track(router, xhr, request.bY.a);
 
 		try {
-			xhr.open(request.da, request.aA, true);
+			xhr.open(request.db, request.aD, true);
 		} catch (e) {
-			return done($elm$http$Http$BadUrl_(request.aA));
+			return done($elm$http$Http$BadUrl_(request.aD));
 		}
 
 		_Http_configureRequest(xhr, request);
 
-		request.cq.a && xhr.setRequestHeader('Content-Type', request.cq.a);
-		xhr.send(request.cq.b);
+		request.cr.a && xhr.setRequestHeader('Content-Type', request.cr.a);
+		xhr.send(request.cr.b);
 
 		return function() { xhr.c = true; xhr.abort(); };
 	});
@@ -2395,13 +2395,13 @@ var _Http_toTask = F3(function(router, toTask, request)
 
 function _Http_configureRequest(xhr, request)
 {
-	for (var headers = request.bm; headers.b; headers = headers.b) // WHILE_CONS
+	for (var headers = request.bn; headers.b; headers = headers.b) // WHILE_CONS
 	{
 		xhr.setRequestHeader(headers.a.a, headers.a.b);
 	}
-	xhr.timeout = request.d_.a || 0;
-	xhr.responseType = request.au.d;
-	xhr.withCredentials = request.ci;
+	xhr.timeout = request.d$.a || 0;
+	xhr.responseType = request.ax.d;
+	xhr.withCredentials = request.cj;
 }
 
 
@@ -2422,10 +2422,10 @@ function _Http_toResponse(toBody, xhr)
 function _Http_toMetadata(xhr)
 {
 	return {
-		aA: xhr.responseURL,
-		dE: xhr.status,
-		dF: xhr.statusText,
-		bm: _Http_parseHeaders(xhr.getAllResponseHeaders())
+		aD: xhr.responseURL,
+		dF: xhr.status,
+		dG: xhr.statusText,
+		bn: _Http_parseHeaders(xhr.getAllResponseHeaders())
 	};
 }
 
@@ -2520,15 +2520,15 @@ function _Http_track(router, xhr, tracker)
 	xhr.upload.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2($elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, $elm$http$Http$Sending({
-			dw: event.loaded,
-			bT: event.total
+			dx: event.loaded,
+			bU: event.total
 		}))));
 	});
 	xhr.addEventListener('progress', function(event) {
 		if (xhr.c) { return; }
 		_Scheduler_rawSpawn(A2($elm$core$Platform$sendToSelf, router, _Utils_Tuple2(tracker, $elm$http$Http$Receiving({
-			dn: event.loaded,
-			bT: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
+			$7: event.loaded,
+			bU: event.lengthComputable ? $elm$core$Maybe$Just(event.total) : $elm$core$Maybe$Nothing
 		}))));
 	});
 }
@@ -2540,8 +2540,8 @@ var _Regex_never = /.^/;
 var _Regex_fromStringWith = F2(function(options, string)
 {
 	var flags = 'g';
-	if (options.dc) { flags += 'm'; }
-	if (options.cz) { flags += 'i'; }
+	if (options.dd) { flags += 'm'; }
+	if (options.cA) { flags += 'i'; }
 
 	try
 	{
@@ -2720,9 +2720,9 @@ var $author$project$Search$GotManifest = function (a) {
 	return {$: 1, a: a};
 };
 var $author$project$Search$Loading = {$: 0};
-var $author$project$Search$Model = F4(
-	function (state, string, filter, fullResults) {
-		return {aI: filter, aJ: fullResults, ay: state, a1: string};
+var $author$project$Search$Model = F5(
+	function (state, string, filter, fullResults, allItems) {
+		return {aH: allItems, ae: filter, af: fullResults, aB: state, ak: string};
 	});
 var $author$project$Shared$None = 0;
 var $author$project$Shared$Status = F2(
@@ -3126,7 +3126,7 @@ var $elm$core$Result$isOk = function (result) {
 var $elm$core$Platform$Cmd$batch = _Platform_batch;
 var $author$project$ApiModel$Manifest = F3(
 	function (presNodeUrl, collectibleUrl, itemDefUrl) {
-		return {cF: collectibleUrl, c6: itemDefUrl, dm: presNodeUrl};
+		return {cG: collectibleUrl, c7: itemDefUrl, dn: presNodeUrl};
 	});
 var $elm$json$Json$Decode$field = _Json_decodeField;
 var $elm$core$List$foldrHelper = F4(
@@ -3231,16 +3231,16 @@ var $author$project$ApiModel$encodeItem = function (item) {
 			[
 				_Utils_Tuple2(
 				'hash',
-				$elm$json$Json$Encode$string(item.aM)),
+				$elm$json$Json$Encode$string(item.aO)),
 				_Utils_Tuple2(
 				'name',
-				$elm$json$Json$Encode$string(item.ag)),
+				$elm$json$Json$Encode$string(item.ai)),
 				_Utils_Tuple2(
 				'icon',
-				$elm$json$Json$Encode$string(item.ae)),
+				$elm$json$Json$Encode$string(item.ag)),
 				_Utils_Tuple2(
 				'screenshot',
-				$elm$json$Json$Encode$string(item.ah)),
+				$elm$json$Json$Encode$string(item.aj)),
 				_Utils_Tuple2(
 				'description',
 				$elm$json$Json$Encode$string(item.ad)),
@@ -3252,7 +3252,7 @@ var $author$project$ApiModel$encodeItem = function (item) {
 				$elm$json$Json$Encode$string(item.H)),
 				_Utils_Tuple2(
 				'sets',
-				A2($elm$json$Json$Encode$list, $elm$json$Json$Encode$string, item.aZ))
+				A2($elm$json$Json$Encode$list, $elm$json$Json$Encode$string, item.a$))
 			]));
 };
 var $author$project$Shared$encodeInPortData = function (d) {
@@ -3289,12 +3289,22 @@ var $author$project$Shared$encodeInPortData = function (d) {
 										])))
 							]);
 					default:
-						var list = d.a;
+						var b = d.a;
+						var list = d.b;
 						return _List_fromArray(
 							[
 								_Utils_Tuple2(
 								'Results',
-								A2($elm$json$Json$Encode$list, $author$project$ApiModel$encodeItem, list))
+								$elm$json$Json$Encode$object(
+									_List_fromArray(
+										[
+											_Utils_Tuple2(
+											'validSearch',
+											$elm$json$Json$Encode$bool(b)),
+											_Utils_Tuple2(
+											'items',
+											A2($elm$json$Json$Encode$list, $author$project$ApiModel$encodeItem, list))
+										])))
 							]);
 				}
 			}()));
@@ -3894,7 +3904,7 @@ var $elm$http$Http$resolve = F2(
 			case 3:
 				var metadata = response.a;
 				return $elm$core$Result$Err(
-					$elm$http$Http$BadStatus(metadata.dE));
+					$elm$http$Http$BadStatus(metadata.dF));
 			default:
 				var body = response.b;
 				return A2(
@@ -3922,7 +3932,7 @@ var $elm$http$Http$Request = function (a) {
 };
 var $elm$http$Http$State = F2(
 	function (reqs, subs) {
-		return {bN: reqs, bU: subs};
+		return {bO: reqs, bV: subs};
 	});
 var $elm$core$Task$succeed = _Scheduler_succeed;
 var $elm$http$Http$init = $elm$core$Task$succeed(
@@ -3969,7 +3979,7 @@ var $elm$http$Http$updateReqs = F3(
 					return A2(
 						$elm$core$Task$andThen,
 						function (pid) {
-							var _v4 = req.bX;
+							var _v4 = req.bY;
 							if (_v4.$ === 1) {
 								return A3($elm$http$Http$updateReqs, router, otherCmds, reqs);
 							} else {
@@ -3999,7 +4009,7 @@ var $elm$http$Http$onEffects = F4(
 				return $elm$core$Task$succeed(
 					A2($elm$http$Http$State, reqs, subs));
 			},
-			A3($elm$http$Http$updateReqs, router, cmds, state.bN));
+			A3($elm$http$Http$updateReqs, router, cmds, state.bO));
 	});
 var $elm$core$List$maybeCons = F3(
 	function (f, mx, xs) {
@@ -4064,7 +4074,7 @@ var $elm$http$Http$onSelfMsg = F3(
 				A2(
 					$elm$core$List$filterMap,
 					A3($elm$http$Http$maybeSend, router, tracker, progress),
-					state.bU)));
+					state.bV)));
 	});
 var $elm$http$Http$Cancel = function (a) {
 	return {$: 0, a: a};
@@ -4078,14 +4088,14 @@ var $elm$http$Http$cmdMap = F2(
 			var r = cmd.a;
 			return $elm$http$Http$Request(
 				{
-					ci: r.ci,
-					cq: r.cq,
-					au: A2(_Http_mapExpect, func, r.au),
-					bm: r.bm,
-					da: r.da,
-					d_: r.d_,
-					bX: r.bX,
-					aA: r.aA
+					cj: r.cj,
+					cr: r.cr,
+					ax: A2(_Http_mapExpect, func, r.ax),
+					bn: r.bn,
+					db: r.db,
+					d$: r.d$,
+					bY: r.bY,
+					aD: r.aD
 				});
 		}
 	});
@@ -4108,11 +4118,11 @@ var $elm$http$Http$subscription = _Platform_leaf('Http');
 var $elm$http$Http$request = function (r) {
 	return $elm$http$Http$command(
 		$elm$http$Http$Request(
-			{ci: false, cq: r.cq, au: r.au, bm: r.bm, da: r.da, d_: r.d_, bX: r.bX, aA: r.aA}));
+			{cj: false, cr: r.cr, ax: r.ax, bn: r.bn, db: r.db, d$: r.d$, bY: r.bY, aD: r.aD}));
 };
 var $elm$http$Http$get = function (r) {
 	return $elm$http$Http$request(
-		{cq: $elm$http$Http$emptyBody, au: r.au, bm: _List_Nil, da: 'GET', d_: $elm$core$Maybe$Nothing, bX: $elm$core$Maybe$Nothing, aA: r.aA});
+		{cr: $elm$http$Http$emptyBody, ax: r.ax, bn: _List_Nil, db: 'GET', d$: $elm$core$Maybe$Nothing, bY: $elm$core$Maybe$Nothing, aD: r.aD});
 };
 var $author$project$ApiModel$root = 'https://www.bungie.net';
 var $author$project$Search$sendPort = _Platform_outgoingPort('sendPort', $elm$json$Json$Encode$string);
@@ -4128,17 +4138,17 @@ var $author$project$Shared$unpack = F3(
 	});
 var $author$project$Search$init = function (_v0) {
 	return _Utils_Tuple2(
-		A4($author$project$Search$Model, $author$project$Search$Loading, '', 0, _List_Nil),
+		A5($author$project$Search$Model, $author$project$Search$Loading, '', 0, _List_Nil, _List_Nil),
 		$elm$core$Platform$Cmd$batch(
 			_List_fromArray(
 				[
 					$elm$http$Http$get(
 					{
-						au: A2(
+						ax: A2(
 							$elm$http$Http$expectJson,
 							A2($author$project$Shared$unpack, $author$project$Search$GotError, $author$project$Search$GotManifest),
 							$author$project$ApiModel$decodeManifest),
-						aA: $author$project$ApiModel$root + '/Platform/Destiny2/Manifest'
+						aD: $author$project$ApiModel$root + '/Platform/Destiny2/Manifest'
 					}),
 					$author$project$Search$sendPort(
 					$author$project$Shared$encodeInPortData(
@@ -4177,9 +4187,10 @@ var $author$project$Search$Ready = F2(
 	function (a, b) {
 		return {$: 2, a: a, b: b};
 	});
-var $author$project$Shared$Results = function (a) {
-	return {$: 2, a: a};
-};
+var $author$project$Shared$Results = F2(
+	function (a, b) {
+		return {$: 2, a: a, b: b};
+	});
 var $author$project$Search$SendResults = function (a) {
 	return {$: 9, a: a};
 };
@@ -4460,13 +4471,13 @@ var $elm$core$Set$union = F2(
 var $rluiten$elm_text_search$Index$addDoc = F4(
 	function (docRef, fieldsTokens, docTokens, index) {
 		var irec = index;
-		var updatedDocumentStore = A3($elm$core$Dict$insert, docRef, docTokens, irec.aH);
-		var updatedCorpusTokens = A2($elm$core$Set$union, irec.aG, docTokens);
+		var updatedDocumentStore = A3($elm$core$Dict$insert, docRef, docTokens, irec.aL);
+		var updatedCorpusTokens = A2($elm$core$Set$union, irec.aK, docTokens);
 		var updatedCorpusTokensIndex = $rluiten$elm_text_search$Index$Utils$buildOrderIndex(updatedCorpusTokens);
 		var allBoosts = A2(
 			$elm$core$List$append,
-			A2($elm$core$List$map, $elm$core$Tuple$second, irec.c7),
-			A2($elm$core$List$map, $elm$core$Tuple$second, irec.cN));
+			A2($elm$core$List$map, $elm$core$Tuple$second, irec.c8),
+			A2($elm$core$List$map, $elm$core$Tuple$second, irec.cO));
 		var fieldTokensAndBoosts = A3($elm$core$List$map2, $elm$core$Tuple$pair, fieldsTokens, allBoosts);
 		var tokenAndScores = A2(
 			$elm$core$List$map,
@@ -4482,10 +4493,10 @@ var $rluiten$elm_text_search$Index$addDoc = F4(
 					token,
 					trie);
 			});
-		var updatedTokenStore = A3($elm$core$List$foldr, addTokenScore, irec.a2, tokenAndScores);
+		var updatedTokenStore = A3($elm$core$List$foldr, addTokenScore, irec.a3, tokenAndScores);
 		return _Utils_update(
 			irec,
-			{aG: updatedCorpusTokens, be: updatedCorpusTokensIndex, aH: updatedDocumentStore, aP: $elm$core$Dict$empty, a2: updatedTokenStore});
+			{aK: updatedCorpusTokens, bf: updatedCorpusTokensIndex, aL: updatedDocumentStore, aR: $elm$core$Dict$empty, a3: updatedTokenStore});
 	});
 var $elm$core$Set$empty = $elm$core$Dict$empty;
 var $elm$core$Set$insert = F2(
@@ -4574,7 +4585,7 @@ var $rluiten$elm_text_search$Index$Utils$setIndexFilters = F2(
 		return _Utils_update(
 			irec,
 			{
-				cP: $elm$core$Maybe$Just(listFuncs)
+				cQ: $elm$core$Maybe$Just(listFuncs)
 			});
 	});
 var $rluiten$elm_text_search$Index$Utils$getOrSetFilterList = function (index) {
@@ -4582,11 +4593,11 @@ var $rluiten$elm_text_search$Index$Utils$getOrSetFilterList = function (index) {
 		$rluiten$elm_text_search$Index$Utils$getOrSetIndexFuncList,
 		function (_v0) {
 			var irec = _v0;
-			return irec.cP;
+			return irec.cQ;
 		},
 		function (_v1) {
 			var irec = _v1;
-			return irec.bi;
+			return irec.bj;
 		},
 		$rluiten$elm_text_search$Index$Utils$setIndexFilters,
 		index);
@@ -4631,7 +4642,7 @@ var $rluiten$elm_text_search$Index$Utils$setIndexInitialTransforms = F2(
 		return _Utils_update(
 			irec,
 			{
-				c$: $elm$core$Maybe$Just(listFuncs)
+				c0: $elm$core$Maybe$Just(listFuncs)
 			});
 	});
 var $rluiten$elm_text_search$Index$Utils$getOrSetInitialTransformList = function (index) {
@@ -4639,11 +4650,11 @@ var $rluiten$elm_text_search$Index$Utils$getOrSetInitialTransformList = function
 		$rluiten$elm_text_search$Index$Utils$getOrSetIndexFuncList,
 		function (_v0) {
 			var irec = _v0;
-			return irec.c$;
+			return irec.c0;
 		},
 		function (_v1) {
 			var irec = _v1;
-			return irec.br;
+			return irec.bs;
 		},
 		$rluiten$elm_text_search$Index$Utils$setIndexInitialTransforms,
 		index);
@@ -4672,7 +4683,7 @@ var $rluiten$elm_text_search$Index$Utils$setIndexTransforms = F2(
 		return _Utils_update(
 			irec,
 			{
-				d2: $elm$core$Maybe$Just(listFuncs)
+				d3: $elm$core$Maybe$Just(listFuncs)
 			});
 	});
 var $rluiten$elm_text_search$Index$Utils$getOrSetTransformList = function (index) {
@@ -4680,11 +4691,11 @@ var $rluiten$elm_text_search$Index$Utils$getOrSetTransformList = function (index
 		$rluiten$elm_text_search$Index$Utils$getOrSetIndexFuncList,
 		function (_v0) {
 			var irec = _v0;
-			return irec.d2;
+			return irec.d3;
 		},
 		function (_v1) {
 			var irec = _v1;
-			return irec.bY;
+			return irec.bZ;
 		},
 		$rluiten$elm_text_search$Index$Utils$setIndexTransforms,
 		index);
@@ -4723,13 +4734,13 @@ var $elm$core$Basics$composeL = F3(
 	});
 var $elm$regex$Regex$Match = F4(
 	function (match, index, number, submatches) {
-		return {cZ: index, c9: match, dd: number, dK: submatches};
+		return {c_: index, da: match, de: number, dL: submatches};
 	});
 var $elm$regex$Regex$fromStringWith = _Regex_fromStringWith;
 var $elm$regex$Regex$fromString = function (string) {
 	return A2(
 		$elm$regex$Regex$fromStringWith,
-		{cz: false, dc: false},
+		{cA: false, dd: false},
 		string);
 };
 var $elm$regex$Regex$never = _Regex_never;
@@ -4835,12 +4846,12 @@ var $elm$core$String$isEmpty = function (string) {
 var $rluiten$elm_text_search$Index$Utils$refExists = F2(
 	function (docRef, _v0) {
 		var irec = _v0;
-		return A2($elm$core$Dict$member, docRef, irec.aH);
+		return A2($elm$core$Dict$member, docRef, irec.aL);
 	});
 var $rluiten$elm_text_search$Index$add = F2(
 	function (doc, index) {
 		var irec = index;
-		var docRef = irec.$7(doc);
+		var docRef = irec.dp(doc);
 		if ($elm$core$String$isEmpty(docRef)) {
 			return $elm$core$Result$Err('Error document has an empty unique id (ref).');
 		} else {
@@ -4851,14 +4862,14 @@ var $rluiten$elm_text_search$Index$add = F2(
 					$elm$core$List$foldr,
 					$rluiten$elm_text_search$Index$getWordsForField(doc),
 					_Utils_Tuple2(index, _List_Nil),
-					A2($elm$core$List$map, $elm$core$Tuple$first, irec.cN));
+					A2($elm$core$List$map, $elm$core$Tuple$first, irec.cO));
 				var u1index = _v0.a;
 				var fieldsWordList = _v0.b;
 				var _v1 = A3(
 					$elm$core$List$foldr,
 					$rluiten$elm_text_search$Index$getWordsForFieldList(doc),
 					_Utils_Tuple2(u1index, fieldsWordList),
-					A2($elm$core$List$map, $elm$core$Tuple$first, irec.c7));
+					A2($elm$core$List$map, $elm$core$Tuple$first, irec.c8));
 				var u2index = _v1.a;
 				var u2fieldsWordList = _v1.b;
 				var fieldsTokens = A2($elm$core$List$map, $elm$core$Set$fromList, u2fieldsWordList);
@@ -4881,10 +4892,10 @@ var $author$project$Search$foldData = F3(
 	});
 var $rluiten$elm_text_search$Index$Defaults$elmTextSearchIndexType = '-= ElmTextSearch Index Type 1 =-';
 var $rluiten$elm_text_search$Index$Defaults$getIndexSimpleConfig = function (_v0) {
-	var ref = _v0.$7;
-	var fields = _v0.cN;
-	var listFields = _v0.c7;
-	return {cN: fields, aQ: $rluiten$elm_text_search$Index$Defaults$elmTextSearchIndexType, c7: listFields, $7: ref};
+	var ref = _v0.dp;
+	var fields = _v0.cO;
+	var listFields = _v0.c8;
+	return {cO: fields, aS: $rluiten$elm_text_search$Index$Defaults$elmTextSearchIndexType, c8: listFields, dp: ref};
 };
 var $elm$core$Basics$not = _Basics_not;
 var $rluiten$elm_text_search$StopWordFilter$createFilterFunc = F2(
@@ -5459,24 +5470,24 @@ var $rluiten$elm_text_search$Index$Defaults$defaultStemmerFuncCreator = $rluiten
 var $rluiten$elm_text_search$Index$Defaults$defaultTransformFactories = _List_fromArray(
 	[$rluiten$elm_text_search$Index$Defaults$defaultStemmerFuncCreator]);
 var $rluiten$elm_text_search$Index$Defaults$getDefaultIndexConfig = function (_v0) {
-	var indexType = _v0.aQ;
-	var ref = _v0.$7;
-	var fields = _v0.cN;
-	var listFields = _v0.c7;
-	return {cN: fields, bi: $rluiten$elm_text_search$Index$Defaults$defaultFilterFactories, aQ: indexType, br: $rluiten$elm_text_search$Index$Defaults$defaultInitialTransformFactories, c7: listFields, $7: ref, bY: $rluiten$elm_text_search$Index$Defaults$defaultTransformFactories};
+	var indexType = _v0.aS;
+	var ref = _v0.dp;
+	var fields = _v0.cO;
+	var listFields = _v0.c8;
+	return {cO: fields, bj: $rluiten$elm_text_search$Index$Defaults$defaultFilterFactories, aS: indexType, bs: $rluiten$elm_text_search$Index$Defaults$defaultInitialTransformFactories, c8: listFields, dp: ref, bZ: $rluiten$elm_text_search$Index$Defaults$defaultTransformFactories};
 };
 var $rluiten$trie$TrieModel$empty = $rluiten$trie$TrieModel$EmptyTrie;
 var $rluiten$trie$Trie$empty = $rluiten$trie$TrieModel$empty;
 var $rluiten$elm_text_search$Index$Defaults$indexVersion = '1.1.0';
 var $rluiten$elm_text_search$Index$newWith = function (_v0) {
-	var indexType = _v0.aQ;
-	var ref = _v0.$7;
-	var fields = _v0.cN;
-	var listFields = _v0.c7;
-	var initialTransformFactories = _v0.br;
-	var transformFactories = _v0.bY;
-	var filterFactories = _v0.bi;
-	return {aG: $elm$core$Set$empty, be: $elm$core$Dict$empty, aH: $elm$core$Dict$empty, cN: fields, bi: filterFactories, cP: $elm$core$Maybe$Nothing, aP: $elm$core$Dict$empty, aQ: indexType, aR: $rluiten$elm_text_search$Index$Defaults$indexVersion, br: initialTransformFactories, c$: $elm$core$Maybe$Nothing, c7: listFields, $7: ref, a2: $rluiten$trie$Trie$empty, bY: transformFactories, d2: $elm$core$Maybe$Nothing};
+	var indexType = _v0.aS;
+	var ref = _v0.dp;
+	var fields = _v0.cO;
+	var listFields = _v0.c8;
+	var initialTransformFactories = _v0.bs;
+	var transformFactories = _v0.bZ;
+	var filterFactories = _v0.bj;
+	return {aK: $elm$core$Set$empty, bf: $elm$core$Dict$empty, aL: $elm$core$Dict$empty, cO: fields, bj: filterFactories, cQ: $elm$core$Maybe$Nothing, aR: $elm$core$Dict$empty, aS: indexType, aT: $rluiten$elm_text_search$Index$Defaults$indexVersion, bs: initialTransformFactories, c0: $elm$core$Maybe$Nothing, c8: listFields, dp: ref, a3: $rluiten$trie$Trie$empty, bZ: transformFactories, d3: $elm$core$Maybe$Nothing};
 };
 var $rluiten$elm_text_search$Index$new = function (simpleConfig) {
 	return $rluiten$elm_text_search$Index$newWith(
@@ -5492,11 +5503,11 @@ var $author$project$Search$createIndex = function (data) {
 		$author$project$Search$foldData,
 		$rluiten$elm_text_search$ElmTextSearch$new(
 			{
-				cN: _List_fromArray(
+				cO: _List_fromArray(
 					[
 						_Utils_Tuple2(
 						function ($) {
-							return $.ag;
+							return $.ai;
 						},
 						4.0),
 						_Utils_Tuple2(
@@ -5510,23 +5521,23 @@ var $author$project$Search$createIndex = function (data) {
 						},
 						1.0)
 					]),
-				c7: _List_fromArray(
+				c8: _List_fromArray(
 					[
 						_Utils_Tuple2(
 						function ($) {
-							return $.aZ;
+							return $.a$;
 						},
 						3.0)
 					]),
-				$7: function ($) {
-					return $.aM;
+				dp: function ($) {
+					return $.aO;
 				}
 			}),
 		data);
 };
 var $author$project$ApiModel$RawCollectible = F2(
 	function (parentHashes, source) {
-		return {bE: parentHashes, H: source};
+		return {bF: parentHashes, H: source};
 	});
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$list = _Json_decodeList;
@@ -5576,11 +5587,11 @@ var $author$project$ApiModel$resolveCollectible = F4(
 			$elm$core$Dict$insert,
 			hash,
 			{
-				aV: A3(
+				aX: A3(
 					$elm$core$List$foldl,
 					$author$project$ApiModel$foldPresNodes(pdict),
 					_List_Nil,
-					rc.bE),
+					rc.bF),
 				H: rc.H
 			},
 			accumulator);
@@ -5601,7 +5612,7 @@ var $author$project$ApiModel$decodeCollectibles = function (pdict) {
 };
 var $author$project$ApiModel$RawItem = F6(
 	function (name, icon, screenshot, description, classType, collectibleHash) {
-		return {ab: classType, bd: collectibleHash, ad: description, ae: icon, ag: name, ah: screenshot};
+		return {ab: classType, be: collectibleHash, ad: description, ag: icon, ai: name, aj: screenshot};
 	});
 var $elm$json$Json$Decode$map6 = _Json_map6;
 var $elm$json$Json$Decode$oneOf = _Json_oneOf;
@@ -5658,18 +5669,18 @@ var $author$project$ApiModel$getCollectible = F2(
 	});
 var $author$project$ApiModel$resolveItem = F4(
 	function (cdict, hash, item, accumulator) {
-		var _v0 = _Utils_Tuple3(item.ae, item.ah, item.ad);
+		var _v0 = _Utils_Tuple3(item.ag, item.aj, item.ad);
 		if (((!_v0.a.$) && (!_v0.b.$)) && (!_v0.c.$)) {
 			var icon = _v0.a.a;
 			var screenshot = _v0.b.a;
 			var description = _v0.c.a;
-			var _v1 = A2($author$project$ApiModel$getCollectible, cdict, item.bd);
+			var _v1 = A2($author$project$ApiModel$getCollectible, cdict, item.be);
 			if (!_v1.$) {
 				var collectible = _v1.a;
 				return A3(
 					$elm$core$Dict$insert,
 					hash,
-					{ab: item.ab, ad: description, aM: hash, ae: icon, ag: item.ag, ah: screenshot, aZ: collectible.aV, H: collectible.H},
+					{ab: item.ab, ad: description, aO: hash, ag: icon, ai: item.ai, aj: screenshot, a$: collectible.aX, H: collectible.H},
 					accumulator);
 			} else {
 				return accumulator;
@@ -5722,7 +5733,10 @@ var $author$project$Shared$decodeOutPortData = function (s) {
 					A2(
 					$elm$json$Json$Decode$field,
 					'Query',
-					A2($elm$json$Json$Decode$map, $author$project$Shared$Query, $elm$json$Json$Decode$string)),
+					A2(
+						$elm$json$Json$Decode$map,
+						$author$project$Shared$Query,
+						A2($elm$json$Json$Decode$field, 'string', $elm$json$Json$Decode$string))),
 					A2(
 					$elm$json$Json$Decode$field,
 					'Filter',
@@ -5881,6 +5895,13 @@ var $author$project$Shared$filterPred = function (ft) {
 			};
 	}
 };
+var $elm$core$List$isEmpty = function (xs) {
+	if (!xs.b) {
+		return true;
+	} else {
+		return false;
+	}
+};
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $elm$core$Result$map = F2(
 	function (func, ra) {
@@ -5940,13 +5961,6 @@ var $rluiten$trie$TrieModel$getNodeCore = F2(
 			}
 		}
 	});
-var $elm$core$List$isEmpty = function (xs) {
-	if (!xs.b) {
-		return true;
-	} else {
-		return false;
-	}
-};
 var $rluiten$trie$TrieModel$getNodeByStr = F2(
 	function (key, trie) {
 		return $elm$core$List$isEmpty(key) ? $elm$core$Maybe$Nothing : A2($rluiten$trie$TrieModel$getNodeCore, key, trie);
@@ -6058,21 +6072,21 @@ var $rluiten$trie$Trie$valueCount = $rluiten$trie$TrieModel$valueCount;
 var $rluiten$elm_text_search$Index$Utils$calcIdf = F2(
 	function (_v0, token) {
 		var irec = _v0;
-		var docFrequency = A2($rluiten$trie$Trie$valueCount, token, irec.a2);
+		var docFrequency = A2($rluiten$trie$Trie$valueCount, token, irec.a3);
 		var idfLocal = (docFrequency > 0) ? (1 + A2(
 			$elm$core$Basics$logBase,
 			10,
-			$elm$core$Dict$size(irec.aH) / docFrequency)) : 1;
-		var updatedIdfCache = A3($elm$core$Dict$insert, token, idfLocal, irec.aP);
+			$elm$core$Dict$size(irec.aL) / docFrequency)) : 1;
+		var updatedIdfCache = A3($elm$core$Dict$insert, token, idfLocal, irec.aR);
 		var u1index = _Utils_update(
 			irec,
-			{aP: updatedIdfCache});
+			{aR: updatedIdfCache});
 		return _Utils_Tuple2(u1index, idfLocal);
 	});
 var $rluiten$elm_text_search$Index$Utils$idf = F2(
 	function (index, token) {
 		var irec = index;
-		var _v0 = A2($elm$core$Dict$get, token, irec.aP);
+		var _v0 = A2($elm$core$Dict$get, token, irec.aR);
 		if (_v0.$ === 1) {
 			return A2($rluiten$elm_text_search$Index$Utils$calcIdf, index, token);
 		} else {
@@ -6123,7 +6137,7 @@ var $rluiten$elm_text_search$Index$Vector$updateSetAndVec = F4(
 				function (pos) {
 					return A3($rluiten$sparsevector$SparseVector$insert, pos, tfidf, vec);
 				},
-				A2($elm$core$Dict$get, expandedToken, irec.be)));
+				A2($elm$core$Dict$get, expandedToken, irec.bf)));
 		var expandedTokenDocSet = A2(
 			$elm$core$Maybe$withDefault,
 			$elm$core$Set$empty,
@@ -6133,7 +6147,7 @@ var $rluiten$elm_text_search$Index$Vector$updateSetAndVec = F4(
 					return $elm$core$Set$fromList(
 						$elm$core$Dict$keys(dict));
 				},
-				A2($rluiten$trie$Trie$get, expandedToken, u1irec.a2)));
+				A2($rluiten$trie$Trie$get, expandedToken, u1irec.a3)));
 		var u1docSets = A2($elm$core$Set$union, expandedTokenDocSet, docSets);
 		return _Utils_Tuple3(u1docSets, u1vec, u1index);
 	});
@@ -6143,8 +6157,8 @@ var $rluiten$elm_text_search$Index$Vector$buildDocVector = F4(
 		var vec = _v0.b;
 		var index = _v0.c;
 		var irec = index;
-		var termFrequency = ((1 / tokensLength) * $elm$core$List$length(irec.cN)) * fieldBoosts;
-		var expandedTokens = A2($rluiten$trie$Trie$expand, baseToken, irec.a2);
+		var termFrequency = ((1 / tokensLength) * $elm$core$List$length(irec.cO)) * fieldBoosts;
+		var expandedTokens = A2($rluiten$trie$Trie$expand, baseToken, irec.a3);
 		var _v1 = A3(
 			$elm$core$List$foldr,
 			A2($rluiten$elm_text_search$Index$Vector$updateSetAndVec, termFrequency, baseToken),
@@ -6307,11 +6321,11 @@ var $rluiten$elm_text_search$Index$Vector$updateDocVector = F3(
 							u1index,
 							A3($rluiten$sparsevector$SparseVector$insert, position, termFrequency * idfScore, docVector));
 					}),
-				A2($elm$core$Dict$get, token, irec.be),
+				A2($elm$core$Dict$get, token, irec.bf),
 				A2(
 					$elm$core$Maybe$andThen,
 					$elm$core$Dict$get(docRef),
-					A2($rluiten$trie$Trie$get, token, irec.a2))));
+					A2($rluiten$trie$Trie$get, token, irec.a3))));
 	});
 var $rluiten$elm_text_search$Index$Vector$getDocVector = F2(
 	function (index, docRef) {
@@ -6328,7 +6342,7 @@ var $rluiten$elm_text_search$Index$Vector$getDocVector = F2(
 						_Utils_Tuple2(index, $rluiten$sparsevector$SparseVector$empty),
 						$elm$core$Set$toList(tokenSet));
 				},
-				A2($elm$core$Dict$get, docRef, irec.aH)));
+				A2($elm$core$Dict$get, docRef, irec.aL)));
 	});
 var $rluiten$elm_text_search$Index$Vector$scoreAndCompare = F3(
 	function (queryVector, ref, _v0) {
@@ -6350,7 +6364,7 @@ var $rluiten$elm_text_search$Index$searchTokens = F2(
 	function (tokens, index) {
 		var irec = index;
 		var fieldBoosts = $elm$core$List$sum(
-			A2($elm$core$List$map, $elm$core$Tuple$second, irec.cN));
+			A2($elm$core$List$map, $elm$core$Tuple$second, irec.cO));
 		var _v0 = A3($rluiten$elm_text_search$Index$Vector$getQueryVector, fieldBoosts, tokens, index);
 		var tokenDocSets = _v0.a;
 		var queryVector = _v0.b;
@@ -6376,10 +6390,10 @@ var $rluiten$elm_text_search$Index$search = F2(
 		var tokens = _v0.b;
 		var tokenInStore = function (token) {
 			return !_Utils_eq(
-				A2($rluiten$trie$Trie$getNode, token, i1irec.a2),
+				A2($rluiten$trie$Trie$getNode, token, i1irec.a3),
 				$elm$core$Maybe$Nothing);
 		};
-		return $elm$core$Dict$isEmpty(i1irec.aH) ? $elm$core$Result$Err('Error there are no documents in index to search.') : ($elm$core$String$isEmpty(
+		return $elm$core$Dict$isEmpty(i1irec.aL) ? $elm$core$Result$Err('Error there are no documents in index to search.') : ($elm$core$String$isEmpty(
 			$elm$core$String$trim(query)) ? $elm$core$Result$Err('Error query is empty.') : ($elm$core$List$isEmpty(tokens) ? $elm$core$Result$Err('Error after tokenisation there are no terms to search for.') : (($elm$core$List$isEmpty(tokens) || (!A2($elm$core$List$any, tokenInStore, tokens))) ? $elm$core$Result$Ok(
 			_Utils_Tuple2(i1index, _List_Nil)) : $elm$core$Result$Ok(
 			A2($rluiten$elm_text_search$Index$searchTokens, tokens, i1index)))));
@@ -6411,7 +6425,7 @@ var $author$project$Search$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{ay: $author$project$Search$Error}),
+						{aB: $author$project$Search$Error}),
 					$author$project$Search$sendPort(
 						$author$project$Shared$encodeInPortData(
 							$author$project$Shared$PortError(
@@ -6425,14 +6439,14 @@ var $author$project$Search$update = F2(
 							[
 								$elm$http$Http$get(
 								{
-									au: A2(
+									ax: A2(
 										$elm$http$Http$expectJson,
 										A2(
 											$author$project$Shared$unpack,
 											$author$project$Search$GotError,
 											$author$project$Search$GotPresNodeData(manifest)),
 										$author$project$ApiModel$decodePresNodes),
-									aA: _Utils_ap($author$project$ApiModel$root, manifest.dm)
+									aD: _Utils_ap($author$project$ApiModel$root, manifest.dn)
 								}),
 								$author$project$Search$sendPort(
 								$author$project$Shared$encodeInPortData(
@@ -6448,14 +6462,14 @@ var $author$project$Search$update = F2(
 							[
 								$elm$http$Http$get(
 								{
-									au: A2(
+									ax: A2(
 										$elm$http$Http$expectJson,
 										A2(
 											$author$project$Shared$unpack,
 											$author$project$Search$GotError,
 											$author$project$Search$GotCollectibleData(manifest)),
 										$author$project$ApiModel$decodeCollectibles(pdict)),
-									aA: _Utils_ap($author$project$ApiModel$root, manifest.cF)
+									aD: _Utils_ap($author$project$ApiModel$root, manifest.cG)
 								}),
 								$author$project$Search$sendPort(
 								$author$project$Shared$encodeInPortData(
@@ -6471,11 +6485,11 @@ var $author$project$Search$update = F2(
 							[
 								$elm$http$Http$get(
 								{
-									au: A2(
+									ax: A2(
 										$elm$http$Http$expectJson,
 										A2($author$project$Shared$unpack, $author$project$Search$GotError, $author$project$Search$GotItemData),
 										$author$project$ApiModel$decodeItems(cdict)),
-									aA: _Utils_ap($author$project$ApiModel$root, manifest.c6)
+									aD: _Utils_ap($author$project$ApiModel$root, manifest.c7)
 								}),
 								$author$project$Search$sendPort(
 								$author$project$Shared$encodeInPortData(
@@ -6484,7 +6498,11 @@ var $author$project$Search$update = F2(
 			case 4:
 				var data = msg.a;
 				return _Utils_Tuple2(
-					model,
+					_Utils_update(
+						model,
+						{
+							aH: $elm$core$Dict$values(data)
+						}),
 					$elm$core$Platform$Cmd$batch(
 						_List_fromArray(
 							[
@@ -6500,7 +6518,7 @@ var $author$project$Search$update = F2(
 					_Utils_update(
 						model,
 						{
-							ay: A2(
+							aB: A2(
 								$author$project$Search$Ready,
 								$author$project$Search$createIndex(data),
 								data)
@@ -6522,22 +6540,26 @@ var $author$project$Search$update = F2(
 				} else {
 					if (!_v1.a.$) {
 						var s = _v1.a.a;
-						return _Utils_Tuple2(
+						return ($elm$core$String$length(s) <= 2) ? _Utils_Tuple2(
 							_Utils_update(
 								model,
-								{a1: s}),
+								{af: _List_Nil, ak: s}),
+							$author$project$Search$do($author$project$Search$DoFilter)) : _Utils_Tuple2(
+							_Utils_update(
+								model,
+								{ak: s}),
 							$author$project$Search$do($author$project$Search$DoSearch));
 					} else {
 						var f = _v1.a.a;
 						return _Utils_Tuple2(
 							_Utils_update(
 								model,
-								{aI: f}),
+								{ae: f}),
 							$author$project$Search$do($author$project$Search$DoFilter));
 					}
 				}
 			case 7:
-				var _v2 = model.ay;
+				var _v2 = model.aB;
 				if (_v2.$ === 2) {
 					var index = _v2.a;
 					var data = _v2.b;
@@ -6545,20 +6567,21 @@ var $author$project$Search$update = F2(
 						_Utils_update(
 							model,
 							{
-								aJ: A2(
+								af: A2(
 									$elm$core$Result$withDefault,
 									_List_Nil,
-									A3($author$project$Search$search, data, index, model.a1))
+									A3($author$project$Search$search, data, index, model.ak))
 							}),
 						$author$project$Search$do($author$project$Search$DoFilter));
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
 			case 8:
+				var fres = ((!(!model.ae)) && $elm$core$List$isEmpty(model.af)) ? model.aH : model.af;
 				var res = A2(
 					$elm$core$List$filter,
-					$author$project$Shared$filterPred(model.aI),
-					model.aJ);
+					$author$project$Shared$filterPred(model.ae),
+					fres);
 				return _Utils_Tuple2(
 					model,
 					$author$project$Search$do(
@@ -6569,11 +6592,14 @@ var $author$project$Search$update = F2(
 					model,
 					$author$project$Search$sendPort(
 						$author$project$Shared$encodeInPortData(
-							$author$project$Shared$Results(res))));
+							A2(
+								$author$project$Shared$Results,
+								($elm$core$String$length(model.ak) > 2) || (!(!model.ae)),
+								res))));
 		}
 	});
 var $elm$core$Platform$worker = _Platform_worker;
 var $author$project$Search$main = $elm$core$Platform$worker(
-	{c_: $author$project$Search$init, dL: $author$project$Search$subscriptions, d4: $author$project$Search$update});
+	{c$: $author$project$Search$init, dM: $author$project$Search$subscriptions, d5: $author$project$Search$update});
 _Platform_export({'Search':{'init':$author$project$Search$main(
 	$elm$json$Json$Decode$succeed(0))(0)}});}(this));
