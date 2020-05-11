@@ -6,7 +6,7 @@ import Html exposing (Html)
 import Json.Decode exposing (errorToString)
 
 import Element exposing (
-    Element, el, none, layout,
+    Element, el, none, layoutWith,
     Device, classifyDevice, DeviceClass(..), Orientation(..),
     Color, rgb255,
     row, column, wrappedRow,
@@ -263,8 +263,6 @@ viewItemFull closeButton item =
     column
         [ width fill
         , height fill
-        , padding 10
-        , scrollbarY
         ]
         [ image
             [ width fill ]
@@ -483,7 +481,9 @@ viewFooter model =
 
 view : Model -> Html Msg
 view model =
-    layout
+    layoutWith
+    { options = []
+    }
     [ width fill
     , height fill
     , Font.size <| textSize model
@@ -498,12 +498,18 @@ view model =
         
         , hDivider
         
-        , case model.viewState of
+        , el
+        [ padding 10
+        , width fill
+        , height fill
+        , scrollbarY
+        ]
+        <| case model.viewState of
             SingleItem item -> viewItemFull True item
             
             About -> viewAbout model
 
-            MainView -> el [ width fill, height fill, scrollbarY ]
+            MainView -> el [ width fill, height fill ]
                 <| case model.state of
                     Error e -> text e
                     
@@ -531,7 +537,7 @@ view model =
                                 
                                 ( fullList, _ ) ->
                                     wrappedRow
-                                        [ centerX, spacing 8 ]
+                                        [ centerX, spacing 10 ]
                                         <| List.map
                                             ( lazy <| viewItemLite model )
                                             fullList
