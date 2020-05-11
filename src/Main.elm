@@ -244,11 +244,12 @@ viewItemLite model item =
         , Events.onClick ( FocusItem item )
         , pointer
         ]
-        [ image
-            [ width fill ]
-            { src = root ++ item.screenshot
-            , description = item.name
-            }
+        [ el [ width fill, centerX, centerY] <|
+            image
+                [ width fill, centerX, centerY ]
+                { src = root ++ item.screenshot
+                , description = item.name
+                }
         , el
             [ centerX
             , centerY

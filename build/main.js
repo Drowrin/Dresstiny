@@ -13914,15 +13914,25 @@ var $author$project$Main$viewItemLite = F2(
 			_List_fromArray(
 				[
 					A2(
-					$mdgriffith$elm_ui$Element$image,
+					$mdgriffith$elm_ui$Element$el,
 					_List_fromArray(
 						[
-							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill)
+							$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+							$mdgriffith$elm_ui$Element$centerX,
+							$mdgriffith$elm_ui$Element$centerY
 						]),
-					{
-						ag: item.ak,
-						a4: _Utils_ap($author$project$ApiModel$root, item.am)
-					}),
+					A2(
+						$mdgriffith$elm_ui$Element$image,
+						_List_fromArray(
+							[
+								$mdgriffith$elm_ui$Element$width($mdgriffith$elm_ui$Element$fill),
+								$mdgriffith$elm_ui$Element$centerX,
+								$mdgriffith$elm_ui$Element$centerY
+							]),
+						{
+							ag: item.ak,
+							a4: _Utils_ap($author$project$ApiModel$root, item.am)
+						})),
 					A2(
 					$mdgriffith$elm_ui$Element$el,
 					_List_fromArray(
