@@ -1,4 +1,4 @@
-importScripts('/Dresstiny/build/search.js');
+importScripts('../build/search.js');  
 
 var app = Elm.Search.init();
 
