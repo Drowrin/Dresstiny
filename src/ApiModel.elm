@@ -146,16 +146,20 @@ foldPresNodes pdict hash l =
         _ ->
             l
 
-resolveCollectible : Dict String PresNode -> String -> RawCollectible -> Dict String Collectible -> Dict String Collectible
-resolveCollectible pdict hash rc accumulator =
-    Dict.insert
-        hash
-        { source = rc.source
-        , parents = List.foldl ( foldPresNodes pdict ) [] rc.parentHashes
-        }
-        accumulator
+resolveCollectible : Dict String PresNode -> String -> Maybe RawCollectible -> Dict String Collectible -> Dict String Collectible
+resolveCollectible pdict hash mrc accumulator =
+    case mrc of
+        Just rc ->
+            Dict.insert
+                hash
+                { source = rc.source
+                , parents = List.foldl ( foldPresNodes pdict ) [] rc.parentHashes
+                }
+                accumulator
+        Nothing ->
+            accumulator
 
-resolveCollectibles : Dict String PresNode -> Dict String RawCollectible -> Dict String Collectible
+resolveCollectibles : Dict String PresNode -> Dict String (Maybe RawCollectible) -> Dict String Collectible
 resolveCollectibles pdict rcdict =
     Dict.foldl ( resolveCollectible pdict ) Dict.empty rcdict
 
@@ -163,7 +167,7 @@ decodeCollectibles : Dict String PresNode -> Decoder (Dict String Collectible)
 decodeCollectibles pdict =
     Decode.map
         ( resolveCollectibles pdict )
-        ( dict decodeRawCollectible )
+        ( dict <| maybe decodeRawCollectible )
 
 type alias RawPresNode = Maybe String
 

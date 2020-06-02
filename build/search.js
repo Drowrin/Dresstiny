@@ -5571,6 +5571,15 @@ var $elm$json$Json$Decode$dict = function (decoder) {
 		$elm$core$Dict$fromList,
 		$elm$json$Json$Decode$keyValuePairs(decoder));
 };
+var $elm$json$Json$Decode$oneOf = _Json_oneOf;
+var $elm$json$Json$Decode$maybe = function (decoder) {
+	return $elm$json$Json$Decode$oneOf(
+		_List_fromArray(
+			[
+				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder),
+				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
+			]));
+};
 var $author$project$ApiModel$foldPresNodes = F3(
 	function (pdict, hash, l) {
 		var _v0 = A2($elm$core$Dict$get, hash, pdict);
@@ -5582,19 +5591,24 @@ var $author$project$ApiModel$foldPresNodes = F3(
 		}
 	});
 var $author$project$ApiModel$resolveCollectible = F4(
-	function (pdict, hash, rc, accumulator) {
-		return A3(
-			$elm$core$Dict$insert,
-			hash,
-			{
-				aX: A3(
-					$elm$core$List$foldl,
-					$author$project$ApiModel$foldPresNodes(pdict),
-					_List_Nil,
-					rc.bF),
-				H: rc.H
-			},
-			accumulator);
+	function (pdict, hash, mrc, accumulator) {
+		if (!mrc.$) {
+			var rc = mrc.a;
+			return A3(
+				$elm$core$Dict$insert,
+				hash,
+				{
+					aX: A3(
+						$elm$core$List$foldl,
+						$author$project$ApiModel$foldPresNodes(pdict),
+						_List_Nil,
+						rc.bF),
+					H: rc.H
+				},
+				accumulator);
+		} else {
+			return accumulator;
+		}
 	});
 var $author$project$ApiModel$resolveCollectibles = F2(
 	function (pdict, rcdict) {
@@ -5608,22 +5622,14 @@ var $author$project$ApiModel$decodeCollectibles = function (pdict) {
 	return A2(
 		$elm$json$Json$Decode$map,
 		$author$project$ApiModel$resolveCollectibles(pdict),
-		$elm$json$Json$Decode$dict($author$project$ApiModel$decodeRawCollectible));
+		$elm$json$Json$Decode$dict(
+			$elm$json$Json$Decode$maybe($author$project$ApiModel$decodeRawCollectible)));
 };
 var $author$project$ApiModel$RawItem = F6(
 	function (name, icon, screenshot, description, classType, collectibleHash) {
 		return {ab: classType, be: collectibleHash, ad: description, ag: icon, ai: name, aj: screenshot};
 	});
 var $elm$json$Json$Decode$map6 = _Json_map6;
-var $elm$json$Json$Decode$oneOf = _Json_oneOf;
-var $elm$json$Json$Decode$maybe = function (decoder) {
-	return $elm$json$Json$Decode$oneOf(
-		_List_fromArray(
-			[
-				A2($elm$json$Json$Decode$map, $elm$core$Maybe$Just, decoder),
-				$elm$json$Json$Decode$succeed($elm$core$Maybe$Nothing)
-			]));
-};
 var $author$project$ApiModel$decodeRawItem = A7(
 	$elm$json$Json$Decode$map6,
 	$author$project$ApiModel$RawItem,
