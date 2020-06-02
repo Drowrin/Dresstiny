@@ -3,6 +3,8 @@ port module Main exposing (main)
 import Browser
 import Browser.Events
 import Html exposing (Html)
+import Html.Events
+import Html.Attributes
 import Json.Decode exposing (errorToString)
 
 import Element exposing (
@@ -25,6 +27,8 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Lazy exposing (lazy)
 import Element.Events as Events
+
+import Debug
 
 import ApiModel exposing (
     Item, root
@@ -97,6 +101,8 @@ type Msg
 
     | ToggleSelectingFitler
     | FilterSelected FilterType
+
+    | ImageError String
 
     | ReturnToList
     | FocusItem Item
@@ -197,6 +203,18 @@ update msg model =
             , sendPort <| encodeOutPortData <| Filter ft
             )
         
+        ImageError hash ->
+            ( { model | results = List.map
+                (\item ->
+                    if item.hash == hash
+                    then { item | screenshot = "" }
+                    else item
+                )
+                model.results
+                }
+            , Cmd.none
+            )
+        
         FocusItem i ->
             ( { model | viewState = SingleItem i }
             , Cmd.none
@@ -218,6 +236,9 @@ bgColor = rgb255 20 20 20
 bgColor2 : Color
 bgColor2 = rgb255 40 40 40
 
+bgColor3 : Color
+bgColor3 = rgb255 15 15 15
+
 txtColor : Color
 txtColor = rgb255 250 250 250
 
@@ -236,19 +257,31 @@ bigTextSize _ = 30
 smallTextSize : Model -> Int
 smallTextSize _ = 12
 
+itemImage : Item -> Element Msg
+itemImage item =
+    if item.screenshot == ""
+    then el
+        [ width fill, height fill, Background.color bgColor3 ]
+        <| el [ centerX, centerY ] <| text "Error Loading Image" 
+    else Element.html
+        <| Html.img
+            [ Html.Attributes.src <| root ++ item.screenshot
+            , Html.Attributes.style "height" "auto"
+            , Html.Attributes.style "max-width" "100%"
+            , Html.Events.on "error"
+                <| Json.Decode.succeed ( ImageError item.hash )
+            ]
+            []
+
 viewItemLite : Model -> Item -> Element Msg
 viewItemLite model item =
     column
-        [ width <| minimum 350 <| maximum 950 <| fill
+        [ width <| minimum 450 <| maximum 950 <| fill
+        , height fill
         , Events.onClick ( FocusItem item )
         , pointer
         ]
-        [ el [ width fill, centerX, centerY] <|
-            image
-                [ width fill, centerX, centerY ]
-                { src = root ++ item.screenshot
-                , description = item.name
-                }
+        [ itemImage item
         , el
             [ centerX
             , centerY
@@ -264,11 +297,7 @@ viewItemFull closeButton item =
         [ width fill
         , height fill
         ]
-        [ image
-            [ width fill ]
-            { src = root ++ item.screenshot
-            , description = item.name
-            }
+        [ itemImage item
         , row
             [ width fill, paddingXY 0 10]
             [ image
@@ -539,7 +568,7 @@ view model =
                                     wrappedRow
                                         [ centerX, spacing 10 ]
                                         <| List.map
-                                            ( lazy <| viewItemLite model )
+                                            ( viewItemLite model )
                                             fullList
         
         , viewFooter model   
