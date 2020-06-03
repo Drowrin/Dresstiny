@@ -13,10 +13,10 @@
 	<script>
 	var searchWorker = new Worker("src/searchworker.js");
 
-	var storedPermission = localStorage.getItem('permission');
+	var storedPermission = localStorage.getItem('Dresstiny:permission');
 	var loadedPermission = storedPermission ? JSON.parse(storedPermission) : false;
 
-	var storedData = localStorage.getItem('data');
+	var storedData = localStorage.getItem('Dresstiny:data');
 	var loadedData = storedData ? JSON.parse(storedData) : null;
 	searchWorker.postMessage(["localStorage", loadedPermission, loadedData]);
 
@@ -34,7 +34,7 @@
 	});
 
 	app.ports.storePermission.subscribe(function (data) {
-		localStorage.setItem('permission', data);
+		localStorage.setItem('Dresstiny:permission', data);
 	});
 
 	searchWorker.onmessage = function (event) {
@@ -46,7 +46,7 @@
 				app.ports.recvPort.send(result);
 				break;
 			case "localStorage":
-				localStorage.setItem('data', JSON.stringify(result));
+				localStorage.setItem('Dresstiny:data', JSON.stringify(result));
 				break;
 		}
 	};
