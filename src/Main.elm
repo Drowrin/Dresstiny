@@ -172,16 +172,11 @@ update msg model =
                         
                         Results validSearch items sets ->
                             let
-                                sel = case ( model.selecting, model.validSearch ) of
-                                    ( SelectingSet, False ) -> NoSelect
-                                    _ -> model.selecting
-                                
                                 m = { model
                                     | state = Ready Synced
                                     , results = items
                                     , currentSets = sets
                                     , validSearch = validSearch
-                                    , selecting = sel
                                     }
                             in
                                 case model.state of
@@ -231,15 +226,9 @@ update msg model =
                 , Cmd.none
                 )
             else
-                case ( ss, model.validSearch ) of
-                    ( SelectingSet, False ) ->
-                        ( { model | selecting = model.selecting }
-                        , Cmd.none
-                        )
-                    _ ->
-                        ( { model | selecting = ss }
-                        , Cmd.none
-                        )
+                ( { model | selecting = ss }
+                , Cmd.none
+                )
         
         FilterSelected ft ->
             ( { model
@@ -432,19 +421,16 @@ viewHeader model =
         headerRowHeight = px 50
 
         setToggle =
-            if model.validSearch then
-                Input.button
-                    [ focused []
-                    , width shrink
-                    , height fill
-                    , padding 15
-                    , alignRight
-                    ]
-                    { onPress = Just ( ToggleSelecting SelectingSet )
-                    , label = text "View Sets"
-                    }
-
-            else none
+            Input.button
+                [ focused []
+                , width shrink
+                , height fill
+                , padding 15
+                , alignRight
+                ]
+                { onPress = Just ( ToggleSelecting SelectingSet )
+                , label = text "View Sets"
+                }
 
         input = row
             [ width fill
@@ -485,7 +471,10 @@ viewHeader model =
                 ]
             
             SelectingSet -> wrappedRow
-                [ width fill, Background.color accColor ]
+                [ width fill
+                , Background.color accColor
+                , scrollbarY
+                ]
                 <| List.map
                     (\s -> Input.button
                         [ height headerRowHeight

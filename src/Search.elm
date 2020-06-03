@@ -270,10 +270,14 @@ update msg model =
                 )
         
         FinishedLoading manifest data index ->
-            ( { model | state = Ready manifest.version index data }
+            ( { model
+              | state = Ready manifest.version index data
+              , allItems = Dict.values data
+              }
             , Cmd.batch
                 [ sendPort <| encodeInPortData <| Status "Done" True
                 , do SaveData
+                , do DoFilter
                 ]
             )
         
@@ -335,24 +339,24 @@ update msg model =
         DoFilter ->
             let
                 fres = 
-                    if ( not <| model.filter == None ) && List.isEmpty model.fullResults
+                    if List.isEmpty model.fullResults
                     then model.allItems
                     else model.fullResults
                 res = List.filter (filterPred model.filter) fres
             in
                 ( model
-                , do (SendResults res)
+                , do ( SendResults res )
                 )
         
         SendResults res ->
-            ( model
-            , sendPort <| encodeInPortData <| Results
-                ( ( String.length model.string > 2)  || ( not <| model.filter == None ) )
-                res
-                ( List.sort <| Set.toList <| Set.fromList
-                    <| List.concatMap
-                        (\i -> i.sets )
-                        res
+            let
+                validSearch = ( String.length model.string > 2) || ( not <| model.filter == None )
+                sets = List.sort <| Set.toList <| Set.fromList
+                        <| List.concatMap
+                            (\i -> i.sets )
+                            res
+            in
+                ( model
+                , sendPort <| encodeInPortData <| Results validSearch res sets
                 )
-            )
 
