@@ -319,7 +319,7 @@ itemImage item =
 viewItemLite : Model -> Item -> Element Msg
 viewItemLite model item =
     column
-        [ width <| minimum 450 <| maximum 950 <| fill
+        [ width <| minimum 420 <| maximum 950 <| fill
         , height fill
         , Events.onClick ( FocusItem item )
         , pointer
