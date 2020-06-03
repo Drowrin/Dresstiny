@@ -632,7 +632,7 @@ view model =
             
             SelectingSet ->
                 wrappedRow
-                    [ Background.color accColor ]
+                    [ Background.color accColor, width fill ]
                     <| List.map
                         (\s -> Input.button
                             [ height headerRowHeight
