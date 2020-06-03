@@ -414,24 +414,6 @@ viewHeader model =
                 , label = Input.labelHidden "Search Box"
                 }
         
-        filterbox = row
-            [ width fill
-            , height headerRowHeight
-            , Background.color <|
-                if model.selectingFilter 
-                then accColor
-                else bgColor
-            , Events.onClick ToggleSelectingFitler
-            ]
-            [ el
-                [ width fill
-                , height fill
-                , centerY
-                , padding 15
-                ]
-                <| text <| filterStr model.filter
-            ]
-        
         filterSelect =
             if model.selectingFilter
             then row
@@ -450,33 +432,41 @@ viewHeader model =
                 ]
             
             else none
+
+        filterbox = row
+            [ width fill
+            , height headerRowHeight
+            , Background.color <|
+                if model.selectingFilter 
+                then accColor
+                else bgColor
+            , Events.onClick ToggleSelectingFitler
+            ]
+            [ el
+                [ width fill
+                , height fill
+                , centerY
+                , padding 15
+                ]
+                <| text <| filterStr model.filter
+            ]
         
         headerRow = case ( model.device.class, model.device.orientation ) of
             ( Phone, Portrait ) -> False
             _ -> model.w >= 600
-    
-    in
-        if headerRow
-        then column
-            [ width fill, height shrink ]
-            [ row
-                [ width fill
-                , height shrink
-                ]
-                [ input
-                , vDivider
-                , filterbox
-                ]
-            
-            , filterSelect
-            ]
+        
+        container = if headerRow then row else column
 
-        else column
-            [ width fill, height shrink ]
+        div = if headerRow then vDivider else hDivider
+    in
+        container
+            [ width fill
+            , height shrink
+            , Element.below filterSelect
+            ]
             [ input
-            , hDivider
+            , div
             , filterbox
-            , filterSelect
             ]
             
 
