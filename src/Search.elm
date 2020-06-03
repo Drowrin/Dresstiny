@@ -166,7 +166,7 @@ type Msg
 
     | DoSearch
     | DoFilter
-    | SendResults (List Item)
+    | SendResults (List Item) (List String)
 
 port sendPort : String -> Cmd msg
 port recvPort : (String -> msg) -> Sub msg
@@ -338,23 +338,21 @@ update msg model =
         
         DoFilter ->
             let
-                fres = 
-                    if List.isEmpty model.fullResults
-                    then model.allItems
-                    else model.fullResults
-                res = List.filter (filterPred model.filter) fres
-            in
-                ( model
-                , do ( SendResults res )
-                )
-        
-        SendResults res ->
-            let
-                validSearch = ( String.length model.string > 2) || ( not <| model.filter == None )
+                res = List.filter (filterPred model.filter) model.fullResults
                 sets = List.sort <| Set.toList <| Set.fromList
                         <| List.concatMap
                             (\i -> i.sets )
-                            res
+                            <| if List.isEmpty model.fullResults
+                                then model.allItems
+                                else model.fullResults
+            in
+                ( model
+                , do ( SendResults res sets )
+                )
+        
+        SendResults res sets ->
+            let
+                validSearch = ( String.length model.string > 2) || ( not <| model.filter == None )
             in
                 ( model
                 , sendPort <| encodeInPortData <| Results validSearch res sets
