@@ -430,11 +430,6 @@ viewHeader model =
                 , padding 15
                 ]
                 <| text <| filterStr model.filter
-            , Input.button
-                [ focused [], padding 10 ]
-                { onPress = Just (FilterSelected None)
-                , label = text "x"
-                }
             ]
         
         filterSelect =
