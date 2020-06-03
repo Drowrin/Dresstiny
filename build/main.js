@@ -12200,6 +12200,7 @@ var $mdgriffith$elm_ui$Element$maximum = F2(
 	function (i, l) {
 		return A2($mdgriffith$elm_ui$Internal$Model$Max, i, l);
 	});
+var $author$project$Main$selColor = A3($mdgriffith$elm_ui$Element$rgb255, 140, 140, 200);
 var $author$project$Main$viewAbout = function (model) {
 	return A2(
 		$mdgriffith$elm_ui$Element$column,
@@ -12243,7 +12244,8 @@ var $author$project$Main$viewAbout = function (model) {
 						$mdgriffith$elm_ui$Element$centerX,
 						$mdgriffith$elm_ui$Element$padding(5),
 						$mdgriffith$elm_ui$Element$focused(_List_Nil),
-						$mdgriffith$elm_ui$Element$Font$bold
+						$mdgriffith$elm_ui$Element$Font$bold,
+						$mdgriffith$elm_ui$Element$Font$color($author$project$Main$selColor)
 					]),
 				{
 					C: $mdgriffith$elm_ui$Element$text('Return'),
@@ -12299,7 +12301,6 @@ var $mdgriffith$elm_ui$Element$link = F2(
 var $author$project$Main$medTextSize = function (_v0) {
 	return 17;
 };
-var $author$project$Main$selColor = A3($mdgriffith$elm_ui$Element$rgb255, 140, 140, 200);
 var $author$project$Main$smallTextSize = function (_v0) {
 	return 12;
 };

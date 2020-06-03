@@ -495,7 +495,7 @@ viewAbout model =
                 """
             ]
         , Input.button
-            [ centerX, padding 5, focused [], Font.bold ]
+            [ centerX, padding 5, focused [], Font.bold, Font.color selColor ]
             { onPress = Just ReturnToList
             , label = text "Return"
             }
