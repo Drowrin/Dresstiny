@@ -12,7 +12,7 @@ import Element exposing (
     Device, classifyDevice, DeviceClass(..), Orientation(..),
     Color, rgb255,
     row, column, wrappedRow,
-    width, height, minimum, maximum, fill, shrink, px,
+    width, height, minimum, maximum, fill, fillPortion, shrink, px,
     scrollbarY,
     centerX, centerY,
     padding, spacing, paddingXY,
@@ -420,6 +420,34 @@ viewHeader model =
     let
         headerRowHeight = px 50
 
+        input = row
+            [ width <| fillPortion 3 ]
+            [ Input.text
+                [ width fill
+                , height headerRowHeight
+                , Background.color bgColor
+                , Border.width 0
+                , focused []
+                , Input.focusedOnLoad
+                , Element.paddingEach { top = 15, right = 15, bottom = 0, left = 15 }
+                ]
+                { onChange = SearchString
+                , text = model.string
+                , placeholder = Just <| Input.placeholder [] <| text <| "Search..."
+                , label = Input.labelHidden "Search Box"
+                }
+            , if String.length model.string > 0 then
+                Input.button
+                    [ focused []
+                    , height fill
+                    , width headerRowHeight
+                    ]
+                    { onPress = Just ( SearchString "" )
+                    , label = el [ centerX, centerY ] <| text "x"
+                    }
+                else none
+            ]
+        
         setToggle =
             Input.button
                 [ focused []
@@ -436,21 +464,24 @@ viewHeader model =
                 , label = el [ centerX ] <| text "View Sets"
                 }
 
-        input =
-            Input.text
-                [ width fill
-                , height headerRowHeight
-                , Background.color bgColor
-                , Border.width 0
-                , focused []
-                , Input.focusedOnLoad
-                , Element.paddingEach { top = 15, right = 15, bottom = 0, left = 15 }
+        filterbox = row
+            [ width fill
+            , height headerRowHeight
+            , Background.color <|
+                case model.selecting of
+                    SelectingFilter -> accColor
+                    _ -> bgColor
+            , Events.onClick ( ToggleSelecting SelectingFilter )
+            
+            ]
+            [ el
+                [ height fill
+                , centerX
+                , centerY
+                , padding 15
                 ]
-                { onChange = SearchString
-                , text = model.string
-                , placeholder = Just <| Input.placeholder [] <| text <| "Search..."
-                , label = Input.labelHidden "Search Box"
-                }
+                <| text <| filterStr model.filter
+            ]
         
         selectBox = case model.selecting of
             SelectingFilter -> row
@@ -485,25 +516,6 @@ viewHeader model =
                     model.currentSets
             
             NoSelect -> none
-
-        filterbox a = row
-            [ width fill
-            , height headerRowHeight
-            , Background.color <|
-                case model.selecting of
-                    SelectingFilter -> accColor
-                    _ -> bgColor
-            , Events.onClick ( ToggleSelecting SelectingFilter )
-            
-            ]
-            [ el
-                [ height fill
-                , a
-                , centerY
-                , padding 15
-                ]
-                <| text <| filterStr model.filter
-            ]
         
         headerRow = case ( model.device.class, model.device.orientation ) of
             ( Phone, Portrait ) -> False
@@ -521,7 +533,7 @@ viewHeader model =
                 , vDivider
                 , setToggle
                 , vDivider
-                , filterbox alignRight
+                , filterbox
                 ]
         else
             column att
@@ -531,7 +543,7 @@ viewHeader model =
                     [ width fill ]
                     [ setToggle
                     , vDivider
-                    , filterbox centerX
+                    , filterbox
                     ]
                 ]
             
