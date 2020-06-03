@@ -14125,7 +14125,7 @@ var $author$project$Main$viewItemLite = F2(
 					$mdgriffith$elm_ui$Element$width(
 					A2(
 						$mdgriffith$elm_ui$Element$minimum,
-						420,
+						400,
 						A2($mdgriffith$elm_ui$Element$maximum, 950, $mdgriffith$elm_ui$Element$fill))),
 					$mdgriffith$elm_ui$Element$height($mdgriffith$elm_ui$Element$fill),
 					$mdgriffith$elm_ui$Element$Events$onClick(
