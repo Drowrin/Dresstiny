@@ -415,11 +415,12 @@ vDivider =
         , el [ height <| px 10 ] none
         ]
 
+headerRowHeight : Element.Length
+headerRowHeight = px 50
+
 viewHeader : Model -> Element Msg
 viewHeader model =
     let
-        headerRowHeight = px 50
-
         input = row
             [ width <| fillPortion 3 ]
             [ Input.text
@@ -483,40 +484,6 @@ viewHeader model =
                 <| text <| filterStr model.filter
             ]
         
-        selectBox = case model.selecting of
-            SelectingFilter -> row
-                [ width fill ] 
-                [ Input.radioRow
-                    [ height headerRowHeight
-                    , width fill
-                    , spacing 10
-                    , Background.color accColor
-                    ]
-                    { onChange = FilterSelected
-                    , selected = Just model.filter
-                    , label = Input.labelHidden "Filter Selection"
-                    , options = List.map viewFilterOption validFilters
-                    }
-                ]
-            
-            SelectingSet -> wrappedRow
-                [ width fill
-                , Background.color accColor
-                , scrollbarY
-                ]
-                <| List.map
-                    (\s -> Input.button
-                        [ height headerRowHeight
-                        , spacing 10
-                        ]
-                        { onPress = Just ( SetSelected s )
-                        , label = el [ padding 15 ] <| text s
-                        }
-                    )
-                    model.currentSets
-            
-            NoSelect -> none
-        
         headerRow = case ( model.device.class, model.device.orientation ) of
             ( Phone, Portrait ) -> False
             _ -> model.w >= 600
@@ -524,7 +491,6 @@ viewHeader model =
         att =
             [ width fill
             , height shrink
-            , Element.below selectBox
             ]
     in
         if headerRow then
@@ -646,66 +612,100 @@ viewFooter model =
 
 view : Model -> Html Msg
 view model =
-    layoutWith
-    { options = []
-    }
-    [ width fill
-    , height fill
-    , Font.size <| textSize model
-    , Font.color txtColor
-    , Background.color bgColor
-    ]
-    <| column
+    let
+        selectBox = case model.selecting of
+            SelectingFilter -> 
+                row
+                    [ width fill ] 
+                    [ Input.radioRow
+                        [ height headerRowHeight
+                        , width fill
+                        , spacing 10
+                        , Background.color accColor
+                        ]
+                        { onChange = FilterSelected
+                        , selected = Just model.filter
+                        , label = Input.labelHidden "Filter Selection"
+                        , options = List.map viewFilterOption validFilters
+                        }
+                    ]
+            
+            SelectingSet ->
+                wrappedRow
+                    [ Background.color accColor ]
+                    <| List.map
+                        (\s -> Input.button
+                            [ height headerRowHeight
+                            , spacing 10
+                            ]
+                            { onPress = Just ( SetSelected s )
+                            , label = el [ padding 15 ] <| text s
+                            }
+                        )
+                        model.currentSets
+                
+            
+            NoSelect -> hDivider
+    in
+        layoutWith
+        { options = []
+        }
         [ width fill
         , height fill
+        , Font.size <| textSize model
+        , Font.color txtColor
+        , Background.color bgColor
         ]
-        [ viewHeader model
-        
-        , hDivider
-        
-        , el
-        [ padding 10
-        , width fill
-        , height fill
-        , scrollbarY
-        ]
-        <| case model.viewState of
-            SingleItem item -> viewItemFull True item
+        <| column
+            [ width fill
+            , height fill
+            ]
+            [ viewHeader model
             
-            About -> viewAbout model
+            , el
+            [ padding 10
+            , width fill
+            , height fill
+            , scrollbarY
+            , Element.inFront <| selectBox
+            ]
+            <| case model.viewState of
+                SingleItem item -> viewItemFull True item
+                
+                About -> viewAbout model
 
-            MainView -> el [ width fill, height fill ]
-                <| case model.state of
-                    Error e -> text e
-                    
-                    Loading s ->
-                        el
-                        [ centerX
-                        , centerY
-                        ]
-                        <| paragraph
-                            []
-                            [ text s
+                MainView -> el [ width fill, height fill ]
+                    <| case model.state of
+                        Error e -> text e
+                        
+                        Loading s ->
+                            el
+                            [ centerX
+                            , centerY
                             ]
+                            <| paragraph
+                                []
+                                [ text s
+                                ]
 
-                    Ready syncstate ->
-                        if not model.validSearch
-                        then
-                            el [centerX, centerY ] <| text "Ready to search!"
-                        else
-                            case ( model.results, syncstate ) of
-                                ( [], Synced ) -> el [ centerX, centerY ] <| text "No Results"
-                                ( [], Getting _ ) -> el [ centerX, centerY ] <| text "Searching..."
-                                
-                                ( [ result ], _ ) ->
-                                    viewItemFull False result
-                                
-                                ( fullList, _ ) ->
-                                    wrappedRow
-                                        [ centerX, spacing 10 ]
-                                        <| List.map
-                                            ( viewItemLite model )
-                                            fullList
-        
-        , viewFooter model   
-        ]
+                        Ready syncstate ->
+                            if not model.validSearch
+                            then
+                                el [centerX, centerY ] <| text "Ready to search!"
+                            else
+                                case ( model.results, syncstate ) of
+                                    ( [], Synced ) -> el [ centerX, centerY ] <| text "No Results"
+                                    ( [], Getting _ ) -> el [ centerX, centerY ] <| text "Searching..."
+                                    
+                                    ( [ result ], _ ) ->
+                                        viewItemFull False result
+                                    
+                                    ( fullList, _ ) ->
+                                        wrappedRow
+                                            [ centerX, spacing 10 ]
+                                            <| List.map
+                                                ( viewItemLite model )
+                                                fullList
+            
+            , viewFooter model   
+            ]
