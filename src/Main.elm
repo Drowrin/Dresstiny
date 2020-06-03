@@ -475,7 +475,11 @@ viewAbout model =
     column
         [ width fill, centerY, spacing 10 ]
         [ paragraph
-            [ centerX, centerY, width <| maximum 600 <| fill ]
+            [ centerX
+            , centerY
+            , width <| maximum 610 <| fill
+            , Font.center
+            ]
             [ el
                 [ alignLeft, padding 8, Font.bold, Font.size <| bigTextSize model ]
                 <| text "Dresstiny"
