@@ -6146,6 +6146,7 @@ var $author$project$Shared$filterPred = function (ft) {
 			};
 	}
 };
+var $elm$core$Basics$ge = _Utils_ge;
 var $elm$http$Http$emptyBody = _Http_emptyBody;
 var $elm$http$Http$Request = function (a) {
 	return {$: 1, a: a};
@@ -6326,6 +6327,7 @@ var $elm$core$List$isEmpty = function (xs) {
 		return false;
 	}
 };
+var $author$project$Const$minSearchChars = 2;
 var $elm$core$Platform$Cmd$none = $elm$core$Platform$Cmd$batch(_List_Nil);
 var $author$project$Const$root = 'https://www.bungie.net';
 var $elm$core$Result$map = F2(
@@ -7068,7 +7070,9 @@ var $author$project$Search$update = F2(
 					switch (_v6.a.$) {
 						case 0:
 							var s = _v6.a.a;
-							return ($elm$core$String$length(s) <= 2) ? _Utils_Tuple2(
+							return (_Utils_cmp(
+								$elm$core$String$length(s),
+								$author$project$Const$minSearchChars) < 0) ? _Utils_Tuple2(
 								_Utils_update(
 									model,
 									{X: _List_Nil, ak: s}),
@@ -7132,7 +7136,9 @@ var $author$project$Search$update = F2(
 			default:
 				var res = msg.a;
 				var sets = msg.b;
-				var validSearch = ($elm$core$String$length(model.ak) > 2) || (!(!model.az));
+				var validSearch = (_Utils_cmp(
+					$elm$core$String$length(model.ak),
+					$author$project$Const$minSearchChars) > -1) || (!(!model.az));
 				return _Utils_Tuple2(
 					model,
 					$author$project$Search$sendPort(

@@ -10,7 +10,7 @@ import Http
 import ElmTextSearch
 import ElmTextSearch.Json.Encoder
 
-import Const exposing (root, dataVersion)
+import Const exposing (root, dataVersion, minSearchChars)
 import ApiModel exposing (
     Item, decodeItems, decodeItem, encodeItem,
     Manifest, decodeManifest,
@@ -304,7 +304,7 @@ update msg model =
                     , sendPort <| encodeInPortData <| PortError <| errorToString e
                     )
                 Ok ( Query s ) -> 
-                    if String.length s <= 2
+                    if String.length s < minSearchChars
                     then
                         ( { model | string = s, fullResults = [] }
                         , do DoFilter
@@ -352,7 +352,9 @@ update msg model =
         
         SendResults res sets ->
             let
-                validSearch = ( String.length model.string > 2) || ( not <| model.filter == None )
+                validSearch =
+                    ( String.length model.string >= minSearchChars) || 
+                    ( not <| model.filter == None )
             in
                 ( model
                 , sendPort <| encodeInPortData <| Results validSearch res sets
