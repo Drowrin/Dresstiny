@@ -423,20 +423,21 @@ viewHeader model =
         setToggle =
             Input.button
                 [ focused []
-                , width shrink
+                , width fill
                 , height fill
                 , padding 15
                 , alignRight
+                , Background.color <|
+                case model.selecting of
+                    SelectingSet -> accColor
+                    _ -> bgColor
                 ]
                 { onPress = Just ( ToggleSelecting SelectingSet )
-                , label = text "View Sets"
+                , label = el [ centerX ] <| text "View Sets"
                 }
 
-        input = row
-            [ width fill
-            , height shrink
-            ]
-            [ Input.text
+        input =
+            Input.text
                 [ width fill
                 , height headerRowHeight
                 , Background.color bgColor
@@ -450,9 +451,6 @@ viewHeader model =
                 , placeholder = Just <| Input.placeholder [] <| text <| "Search..."
                 , label = Input.labelHidden "Search Box"
                 }
-            
-            , setToggle
-            ]
         
         selectBox = case model.selecting of
             SelectingFilter -> row
@@ -488,7 +486,7 @@ viewHeader model =
             
             NoSelect -> none
 
-        filterbox = row
+        filterbox a = row
             [ width fill
             , height headerRowHeight
             , Background.color <|
@@ -496,10 +494,11 @@ viewHeader model =
                     SelectingFilter -> accColor
                     _ -> bgColor
             , Events.onClick ( ToggleSelecting SelectingFilter )
+            
             ]
             [ el
-                [ width fill
-                , height fill
+                [ height fill
+                , a
                 , centerY
                 , padding 15
                 ]
@@ -510,19 +509,31 @@ viewHeader model =
             ( Phone, Portrait ) -> False
             _ -> model.w >= 600
         
-        container = if headerRow then row else column
-
-        div = if headerRow then vDivider else hDivider
-    in
-        container
+        att =
             [ width fill
             , height shrink
             , Element.below selectBox
             ]
-            [ input
-            , div
-            , filterbox
-            ]
+    in
+        if headerRow then
+            row att
+                [ input
+                , vDivider
+                , setToggle
+                , vDivider
+                , filterbox alignRight
+                ]
+        else
+            column att
+                [ input
+                , hDivider
+                , row
+                    [ width fill ]
+                    [ setToggle
+                    , vDivider
+                    , filterbox centerX
+                    ]
+                ]
             
 
 viewAbout : Model -> Element Msg
