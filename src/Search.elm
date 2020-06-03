@@ -2,10 +2,10 @@ port module Search exposing (main)
 
 import Platform exposing (Program)
 import Dict exposing (Dict)
+import Set
 import Json.Decode as Decode exposing (errorToString)
 import Json.Encode as Encode
 import Http
-import Task
 
 import ElmTextSearch
 import ElmTextSearch.Json.Encoder
@@ -21,7 +21,8 @@ import Shared exposing (
     ErrorType, unpack, errStr,
     OutPortData(..), decodeOutPortData,
     InPortData(..), encodeInPortData,
-    FilterType(..), filterPred
+    FilterType(..), filterPred,
+    do
     )
 
 type alias Index = ElmTextSearch.Index Item
@@ -157,6 +158,7 @@ type Msg
     | GotCollectibleData Manifest (Dict String Collectible)
     | GotItemData Manifest Data
     | IndexData Manifest Data
+    | FinishedLoading Manifest Data Index
     
     | SaveData
 
@@ -174,10 +176,6 @@ port storeData : String -> Cmd msg
 subscriptions : Model -> Sub Msg
 subscriptions _ =
     recvPort GotPortMessage
-
-do : Msg -> Cmd Msg
-do msg =
-    Task.perform (\_ -> msg) <| Task.succeed ()
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
@@ -213,8 +211,8 @@ update msg model =
             in
                 case readyData of
                     Just ( index, data ) ->
-                        ( { model | state = Ready manifest.version index data }
-                        , sendPort <| encodeInPortData <| Status "Done" True
+                        ( model
+                        , do ( FinishedLoading manifest data index )
                         )
                     _ ->
                         ( model
@@ -267,12 +265,17 @@ update msg model =
             let
                 index = createIndex data
             in
-                ( { model | state = Ready manifest.version index data }
-                , Cmd.batch
-                    [ sendPort <| encodeInPortData <| Status "Done" True
-                    , do SaveData
-                    ]
+                ( model
+                , do ( FinishedLoading manifest data index )
                 )
+        
+        FinishedLoading manifest data index ->
+            ( { model | state = Ready manifest.version index data }
+            , Cmd.batch
+                [ sendPort <| encodeInPortData <| Status "Done" True
+                , do SaveData
+                ]
+            )
         
         SaveData ->
             case model.state of
@@ -346,5 +349,10 @@ update msg model =
             , sendPort <| encodeInPortData <| Results
                 ( ( String.length model.string > 2)  || ( not <| model.filter == None ) )
                 res
+                ( List.sort <| Set.toList <| Set.fromList
+                    <| List.concatMap
+                        (\i -> i.sets )
+                        res
+                )
             )
 

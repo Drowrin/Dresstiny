@@ -519,11 +519,11 @@ function _Debug_crash_UNUSED(identifier, fact1, fact2, fact3, fact4)
 
 function _Debug_regionToString(region)
 {
-	if (region.a3.ai === region.bk.ai)
+	if (region.a3.ah === region.bk.ah)
 	{
-		return 'on line ' + region.a3.ai;
+		return 'on line ' + region.a3.ah;
 	}
-	return 'on lines ' + region.a3.ai + ' through ' + region.bk.ai;
+	return 'on lines ' + region.a3.ah + ' through ' + region.bk.ah;
 }
 
 
@@ -3116,7 +3116,7 @@ var $author$project$Search$GetManifest = function (a) {
 var $author$project$Search$Loading = {$: 0};
 var $author$project$Search$Model = F6(
 	function (state, storagePermission, string, filter, fullResults, allItems) {
-		return {aH: allItems, af: filter, ag: fullResults, Z: state, a5: storagePermission, al: string};
+		return {aH: allItems, ae: filter, af: fullResults, ak: state, a5: storagePermission, al: string};
 	});
 var $author$project$Shared$None = 0;
 var $author$project$Shared$Status = F2(
@@ -3131,7 +3131,7 @@ var $author$project$Search$StoredData = F3(
 var $author$project$Const$dataVersion = '1.0';
 var $author$project$ApiModel$Item = F8(
 	function (hash, name, icon, screenshot, description, classType, source, sets) {
-		return {ac: classType, ae: description, aO: hash, ah: icon, aj: name, ak: screenshot, a1: sets, H: source};
+		return {ab: classType, ad: description, aO: hash, ag: icon, ai: name, aj: screenshot, a1: sets, H: source};
 	});
 var $elm$json$Json$Decode$int = _Json_decodeInt;
 var $elm$json$Json$Decode$list = _Json_decodeList;
@@ -4239,7 +4239,7 @@ var $author$project$Search$indexConfig = {
 		[
 			_Utils_Tuple2(
 			function ($) {
-				return $.aj;
+				return $.ai;
 			},
 			4.0),
 			_Utils_Tuple2(
@@ -4249,7 +4249,7 @@ var $author$project$Search$indexConfig = {
 			2.0),
 			_Utils_Tuple2(
 			function ($) {
-				return $.ae;
+				return $.ad;
 			},
 			1.0)
 		]),
@@ -4381,7 +4381,7 @@ var $elm$core$Task$perform = F2(
 		return $elm$core$Task$command(
 			A2($elm$core$Task$map, toMessage, task));
 	});
-var $author$project$Search$do = function (msg) {
+var $author$project$Shared$do = function (msg) {
 	return A2(
 		$elm$core$Task$perform,
 		function (_v0) {
@@ -4423,19 +4423,19 @@ var $author$project$ApiModel$encodeItem = function (item) {
 				$elm$json$Json$Encode$string(item.aO)),
 				_Utils_Tuple2(
 				'name',
-				$elm$json$Json$Encode$string(item.aj)),
+				$elm$json$Json$Encode$string(item.ai)),
 				_Utils_Tuple2(
 				'icon',
-				$elm$json$Json$Encode$string(item.ah)),
+				$elm$json$Json$Encode$string(item.ag)),
 				_Utils_Tuple2(
 				'screenshot',
-				$elm$json$Json$Encode$string(item.ak)),
+				$elm$json$Json$Encode$string(item.aj)),
 				_Utils_Tuple2(
 				'description',
-				$elm$json$Json$Encode$string(item.ae)),
+				$elm$json$Json$Encode$string(item.ad)),
 				_Utils_Tuple2(
 				'classType',
-				$elm$json$Json$Encode$int(item.ac)),
+				$elm$json$Json$Encode$int(item.ab)),
 				_Utils_Tuple2(
 				'source',
 				$elm$json$Json$Encode$string(item.H)),
@@ -4479,7 +4479,8 @@ var $author$project$Shared$encodeInPortData = function (d) {
 							]);
 					default:
 						var b = d.a;
-						var list = d.b;
+						var items = d.b;
+						var sets = d.c;
 						return _List_fromArray(
 							[
 								_Utils_Tuple2(
@@ -4492,7 +4493,10 @@ var $author$project$Shared$encodeInPortData = function (d) {
 											$elm$json$Json$Encode$bool(b)),
 											_Utils_Tuple2(
 											'items',
-											A2($elm$json$Json$Encode$list, $author$project$ApiModel$encodeItem, list))
+											A2($elm$json$Json$Encode$list, $author$project$ApiModel$encodeItem, items)),
+											_Utils_Tuple2(
+											'sets',
+											A2($elm$json$Json$Encode$list, $elm$json$Json$Encode$string, sets))
 										])))
 							]);
 				}
@@ -4508,7 +4512,7 @@ var $author$project$Search$init = function (fs) {
 					$author$project$Search$sendPort(
 					$author$project$Shared$encodeInPortData(
 						A2($author$project$Shared$Status, 'Checking Local Data', false))),
-					$author$project$Search$do(
+					$author$project$Shared$do(
 					$author$project$Search$GetManifest(
 						function () {
 							var _v0 = fs.V;
@@ -4528,15 +4532,19 @@ var $author$project$Search$init = function (fs) {
 				])));
 };
 var $author$project$Search$GotPortMessage = function (a) {
-	return {$: 8, a: a};
+	return {$: 9, a: a};
 };
 var $author$project$Search$recvPort = _Platform_incomingPort('recvPort', $elm$json$Json$Decode$string);
 var $author$project$Search$subscriptions = function (_v0) {
 	return $author$project$Search$recvPort($author$project$Search$GotPortMessage);
 };
-var $author$project$Search$DoFilter = {$: 10};
-var $author$project$Search$DoSearch = {$: 9};
+var $author$project$Search$DoFilter = {$: 11};
+var $author$project$Search$DoSearch = {$: 10};
 var $author$project$Search$Error = {$: 1};
+var $author$project$Search$FinishedLoading = F3(
+	function (a, b, c) {
+		return {$: 7, a: a, b: b, c: c};
+	});
 var $author$project$Search$GotCollectibleData = F2(
 	function (a, b) {
 		return {$: 4, a: a, b: b};
@@ -4567,14 +4575,30 @@ var $author$project$Search$Ready = F3(
 	function (a, b, c) {
 		return {$: 2, a: a, b: b, c: c};
 	});
-var $author$project$Shared$Results = F2(
-	function (a, b) {
-		return {$: 2, a: a, b: b};
+var $author$project$Shared$Results = F3(
+	function (a, b, c) {
+		return {$: 2, a: a, b: b, c: c};
 	});
-var $author$project$Search$SaveData = {$: 7};
+var $author$project$Search$SaveData = {$: 8};
 var $author$project$Search$SendResults = function (a) {
-	return {$: 11, a: a};
+	return {$: 12, a: a};
 };
+var $elm$core$List$append = F2(
+	function (xs, ys) {
+		if (!ys.b) {
+			return xs;
+		} else {
+			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
+		}
+	});
+var $elm$core$List$concat = function (lists) {
+	return A3($elm$core$List$foldr, $elm$core$List$append, _List_Nil, lists);
+};
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
 var $elm$core$Dict$singleton = F2(
 	function (key, value) {
 		return A5($elm$core$Dict$RBNode_elm_builtin, 1, key, value, $elm$core$Dict$RBEmpty_elm_builtin, $elm$core$Dict$RBEmpty_elm_builtin);
@@ -4680,14 +4704,6 @@ var $rluiten$trie$TrieModel$add = F3(
 			trie);
 	});
 var $rluiten$trie$Trie$add = $rluiten$trie$TrieModel$add;
-var $elm$core$List$append = F2(
-	function (xs, ys) {
-		if (!ys.b) {
-			return xs;
-		} else {
-			return A3($elm$core$List$foldr, $elm$core$List$cons, ys, xs);
-		}
-	});
 var $elm$core$Dict$isEmpty = function (dict) {
 	if (dict.$ === -2) {
 		return true;
@@ -5253,7 +5269,7 @@ var $author$project$ApiModel$decodeCollectibles = function (pdict) {
 };
 var $author$project$ApiModel$RawItem = F6(
 	function (name, icon, screenshot, description, classType, collectibleHash) {
-		return {ac: classType, bh: collectibleHash, ae: description, ah: icon, aj: name, ak: screenshot};
+		return {ab: classType, bh: collectibleHash, ad: description, ag: icon, ai: name, aj: screenshot};
 	});
 var $elm$json$Json$Decode$map6 = _Json_map6;
 var $author$project$ApiModel$decodeRawItem = A7(
@@ -5301,7 +5317,7 @@ var $author$project$ApiModel$getCollectible = F2(
 	});
 var $author$project$ApiModel$resolveItem = F4(
 	function (cdict, hash, item, accumulator) {
-		var _v0 = _Utils_Tuple3(item.ah, item.ak, item.ae);
+		var _v0 = _Utils_Tuple3(item.ag, item.aj, item.ad);
 		if (((!_v0.a.$) && (!_v0.b.$)) && (!_v0.c.$)) {
 			var icon = _v0.a.a;
 			var screenshot = _v0.b.a;
@@ -5312,7 +5328,7 @@ var $author$project$ApiModel$resolveItem = F4(
 				return A3(
 					$elm$core$Dict$insert,
 					hash,
-					{ac: item.ac, ae: description, aO: hash, ah: icon, aj: item.aj, ak: screenshot, a1: collectible.aY, H: collectible.H},
+					{ab: item.ab, ad: description, aO: hash, ag: icon, ai: item.ai, aj: screenshot, a1: collectible.aY, H: collectible.H},
 					accumulator);
 			} else {
 				return accumulator;
@@ -6117,15 +6133,15 @@ var $author$project$Shared$filterPred = function (ft) {
 			};
 		case 1:
 			return function (i) {
-				return i.ac === 1;
+				return i.ab === 1;
 			};
 		case 2:
 			return function (i) {
-				return i.ac === 2;
+				return i.ab === 2;
 			};
 		default:
 			return function (i) {
-				return !i.ac;
+				return !i.ab;
 			};
 	}
 };
@@ -6816,6 +6832,9 @@ var $author$project$Search$search = F3(
 			},
 			A2($rluiten$elm_text_search$ElmTextSearch$search, string, index));
 	});
+var $elm$core$List$sort = function (xs) {
+	return A2($elm$core$List$sortBy, $elm$core$Basics$identity, xs);
+};
 var $author$project$Search$storeData = _Platform_outgoingPort('storeData', $elm$json$Json$Encode$string);
 var $author$project$Shared$unpack = F3(
 	function (errF, okF, result) {
@@ -6844,7 +6863,7 @@ var $author$project$Search$update = F2(
 				return _Utils_Tuple2(
 					_Utils_update(
 						model,
-						{Z: $author$project$Search$Error}),
+						{ak: $author$project$Search$Error}),
 					$author$project$Search$sendPort(
 						$author$project$Shared$encodeInPortData(
 							$author$project$Shared$PortError(
@@ -6898,14 +6917,9 @@ var $author$project$Search$update = F2(
 					var index = _v2.a;
 					var data = _v2.b;
 					return _Utils_Tuple2(
-						_Utils_update(
-							model,
-							{
-								Z: A3($author$project$Search$Ready, manifest.d8, index, data)
-							}),
-						$author$project$Search$sendPort(
-							$author$project$Shared$encodeInPortData(
-								A2($author$project$Shared$Status, 'Done', true))));
+						model,
+						$author$project$Shared$do(
+							A3($author$project$Search$FinishedLoading, manifest, data, index)));
 				} else {
 					return _Utils_Tuple2(
 						model,
@@ -6986,7 +7000,7 @@ var $author$project$Search$update = F2(
 					$elm$core$Platform$Cmd$batch(
 						_List_fromArray(
 							[
-								$author$project$Search$do(
+								$author$project$Shared$do(
 								A2($author$project$Search$IndexData, manifest, data)),
 								$author$project$Search$sendPort(
 								$author$project$Shared$encodeInPortData(
@@ -6997,10 +7011,18 @@ var $author$project$Search$update = F2(
 				var data = msg.b;
 				var index = $author$project$Search$createIndex(data);
 				return _Utils_Tuple2(
+					model,
+					$author$project$Shared$do(
+						A3($author$project$Search$FinishedLoading, manifest, data, index)));
+			case 7:
+				var manifest = msg.a;
+				var data = msg.b;
+				var index = msg.c;
+				return _Utils_Tuple2(
 					_Utils_update(
 						model,
 						{
-							Z: A3($author$project$Search$Ready, manifest.d8, index, data)
+							ak: A3($author$project$Search$Ready, manifest.d8, index, data)
 						}),
 					$elm$core$Platform$Cmd$batch(
 						_List_fromArray(
@@ -7008,10 +7030,10 @@ var $author$project$Search$update = F2(
 								$author$project$Search$sendPort(
 								$author$project$Shared$encodeInPortData(
 									A2($author$project$Shared$Status, 'Done', true))),
-								$author$project$Search$do($author$project$Search$SaveData)
+								$author$project$Shared$do($author$project$Search$SaveData)
 							])));
-			case 7:
-				var _v5 = model.Z;
+			case 8:
+				var _v5 = model.ak;
 				if (_v5.$ === 2) {
 					var version = _v5.a;
 					var index = _v5.b;
@@ -7028,7 +7050,7 @@ var $author$project$Search$update = F2(
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 8:
+			case 9:
 				var message = msg.a;
 				var _v6 = $author$project$Shared$decodeOutPortData(message);
 				if (_v6.$ === 1) {
@@ -7046,30 +7068,30 @@ var $author$project$Search$update = F2(
 							return ($elm$core$String$length(s) <= 2) ? _Utils_Tuple2(
 								_Utils_update(
 									model,
-									{ag: _List_Nil, al: s}),
-								$author$project$Search$do($author$project$Search$DoFilter)) : _Utils_Tuple2(
+									{af: _List_Nil, al: s}),
+								$author$project$Shared$do($author$project$Search$DoFilter)) : _Utils_Tuple2(
 								_Utils_update(
 									model,
 									{al: s}),
-								$author$project$Search$do($author$project$Search$DoSearch));
+								$author$project$Shared$do($author$project$Search$DoSearch));
 						case 1:
 							var f = _v6.a.a;
 							return _Utils_Tuple2(
 								_Utils_update(
 									model,
-									{af: f}),
-								$author$project$Search$do($author$project$Search$DoFilter));
+									{ae: f}),
+								$author$project$Shared$do($author$project$Search$DoFilter));
 						default:
 							var b = _v6.a.a;
 							return _Utils_Tuple2(
 								_Utils_update(
 									model,
 									{a5: b}),
-								$author$project$Search$do($author$project$Search$SaveData));
+								$author$project$Shared$do($author$project$Search$SaveData));
 					}
 				}
-			case 9:
-				var _v7 = model.Z;
+			case 10:
+				var _v7 = model.ak;
 				if (_v7.$ === 2) {
 					var index = _v7.b;
 					var data = _v7.c;
@@ -7077,24 +7099,24 @@ var $author$project$Search$update = F2(
 						_Utils_update(
 							model,
 							{
-								ag: A2(
+								af: A2(
 									$elm$core$Result$withDefault,
 									_List_Nil,
 									A3($author$project$Search$search, data, index, model.al))
 							}),
-						$author$project$Search$do($author$project$Search$DoFilter));
+						$author$project$Shared$do($author$project$Search$DoFilter));
 				} else {
 					return _Utils_Tuple2(model, $elm$core$Platform$Cmd$none);
 				}
-			case 10:
-				var fres = ((!(!model.af)) && $elm$core$List$isEmpty(model.ag)) ? model.aH : model.ag;
+			case 11:
+				var fres = ((!(!model.ae)) && $elm$core$List$isEmpty(model.af)) ? model.aH : model.af;
 				var res = A2(
 					$elm$core$List$filter,
-					$author$project$Shared$filterPred(model.af),
+					$author$project$Shared$filterPred(model.ae),
 					fres);
 				return _Utils_Tuple2(
 					model,
-					$author$project$Search$do(
+					$author$project$Shared$do(
 						$author$project$Search$SendResults(res)));
 			default:
 				var res = msg.a;
@@ -7102,10 +7124,19 @@ var $author$project$Search$update = F2(
 					model,
 					$author$project$Search$sendPort(
 						$author$project$Shared$encodeInPortData(
-							A2(
+							A3(
 								$author$project$Shared$Results,
-								($elm$core$String$length(model.al) > 2) || (!(!model.af)),
-								res))));
+								($elm$core$String$length(model.al) > 2) || (!(!model.ae)),
+								res,
+								$elm$core$List$sort(
+									$elm$core$Set$toList(
+										$elm$core$Set$fromList(
+											A2(
+												$elm$core$List$concatMap,
+												function (i) {
+													return i.a1;
+												},
+												res))))))));
 		}
 	});
 var $elm$core$Platform$worker = _Platform_worker;

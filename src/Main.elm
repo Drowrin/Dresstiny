@@ -17,7 +17,7 @@ import Element exposing (
     centerX, centerY,
     padding, spacing, paddingXY,
     focused,
-    alignTop, alignLeft, alignBottom,
+    alignTop, alignLeft, alignBottom, alignRight,
     text, image, paragraph, link,
     pointer
     )
@@ -32,7 +32,8 @@ import ApiModel exposing (Item)
 import Shared exposing (
     FilterType(..), filterStr, validFilters,
     OutPortData(..), encodeOutPortData,
-    InPortData(..), decodeInPortData
+    InPortData(..), decodeInPortData,
+    do
     )
 
 type alias Flags =
@@ -75,6 +76,11 @@ type ViewState
     | SingleItem Item
     | About
 
+type SelectState
+    = NoSelect
+    | SelectingSet
+    | SelectingFilter
+
 type alias Model =
     { w : Int
     , h : Int
@@ -87,8 +93,9 @@ type alias Model =
     , results : List Item
     , validSearch : Bool
 
-    , selectingFilter : Bool
+    , currentSets : List String
     , filter : FilterType
+    , selecting : SelectState
 
     , state : State
     , viewState : ViewState
@@ -104,8 +111,9 @@ type Msg
 
     | SearchString String
 
-    | ToggleSelectingFitler
+    | ToggleSelecting SelectState
     | FilterSelected FilterType
+    | SetSelected String
 
     | ImageError String
 
@@ -121,7 +129,12 @@ init f =
         dataState = Loading "Checking Local Storage"
         viewState = MainView
     in
-        ( Model f.w f.h device f.permission (not f.permission) "" [] False False filter dataState viewState
+        ( Model
+            f.w f.h device
+            f.permission (not f.permission)
+            "" [] False
+            [] filter NoSelect
+            dataState viewState
         , Cmd.none
         )
 
@@ -157,35 +170,36 @@ update msg model =
                                 , Cmd.none
                                 )
                         
-                        Results validSearch items ->
-                            case model.state of
-                                Ready (Getting s) ->
-                                    if s == model.string
-                                    then
-                                        ( { model
-                                            | state = Ready Synced
-                                            , results = items
-                                            , validSearch = validSearch
-                                          }
+                        Results validSearch items sets ->
+                            let
+                                sel = case ( model.selecting, model.validSearch ) of
+                                    ( SelectingSet, False ) -> NoSelect
+                                    _ -> model.selecting
+                                
+                                m = { model
+                                    | state = Ready Synced
+                                    , results = items
+                                    , currentSets = sets
+                                    , validSearch = validSearch
+                                    , selecting = sel
+                                    }
+                            in
+                                case model.state of
+                                    Ready (Getting s) ->
+                                        if s == model.string
+                                        then
+                                            ( m
+                                            , Cmd.none
+                                            )
+                                        else
+                                            ( { m | state = Ready <| Getting model.string }
+                                            , sendPort <| encodeOutPortData <|
+                                                Query model.string
+                                            )
+                                    _ ->
+                                        ( m
                                         , Cmd.none
                                         )
-                                    else
-                                        ( { model
-                                            | state = Ready <| Getting model.string
-                                            , results = items
-                                            , validSearch = validSearch
-                                          }
-                                        , sendPort <| encodeOutPortData <|
-                                            Query model.string
-                                        )
-                                _ ->
-                                    ( { model
-                                        | state = Ready Synced
-                                        , results = items
-                                        , validSearch = validSearch
-                                      }
-                                    , Cmd.none
-                                    )
         
         AllowStoragePermission ->
             ( { model | displayPermission = False }
@@ -211,14 +225,33 @@ update msg model =
                     , Cmd.none
                     )
         
-        ToggleSelectingFitler ->
-            ( { model | selectingFilter = not model.selectingFilter }
-            , Cmd.none
-            )
+        ToggleSelecting ss ->
+            if model.selecting == ss then
+                ( { model | selecting = NoSelect }
+                , Cmd.none
+                )
+            else
+                case ( ss, model.validSearch ) of
+                    ( SelectingSet, False ) ->
+                        ( { model | selecting = model.selecting }
+                        , Cmd.none
+                        )
+                    _ ->
+                        ( { model | selecting = ss }
+                        , Cmd.none
+                        )
         
         FilterSelected ft ->
-            ( { model | selectingFilter = False, filter = ft }
+            ( { model
+                | selecting = NoSelect
+                , filter = ft
+              }
             , sendPort <| encodeOutPortData <| Filter ft
+            )
+        
+        SetSelected s ->
+            ( { model | selecting = NoSelect }
+            , do ( SearchString s )
             )
         
         ImageError hash ->
@@ -398,8 +431,26 @@ viewHeader model =
     let
         headerRowHeight = px 50
 
-        input =
-            Input.text
+        setToggle =
+            if model.validSearch then
+                Input.button
+                    [ focused []
+                    , width shrink
+                    , height fill
+                    , padding 15
+                    , alignRight
+                    ]
+                    { onPress = Just ( ToggleSelecting SelectingSet )
+                    , label = text "View Sets"
+                    }
+
+            else none
+
+        input = row
+            [ width fill
+            , height shrink
+            ]
+            [ Input.text
                 [ width fill
                 , height headerRowHeight
                 , Background.color bgColor
@@ -413,10 +464,12 @@ viewHeader model =
                 , placeholder = Just <| Input.placeholder [] <| text <| "Search..."
                 , label = Input.labelHidden "Search Box"
                 }
+            
+            , setToggle
+            ]
         
-        filterSelect =
-            if model.selectingFilter
-            then row
+        selectBox = case model.selecting of
+            SelectingFilter -> row
                 [ width fill ] 
                 [ Input.radioRow
                     [ height headerRowHeight
@@ -431,16 +484,29 @@ viewHeader model =
                     }
                 ]
             
-            else none
+            SelectingSet -> wrappedRow
+                [ width fill, Background.color accColor ]
+                <| List.map
+                    (\s -> Input.button
+                        [ height headerRowHeight
+                        , spacing 10
+                        ]
+                        { onPress = Just ( SetSelected s )
+                        , label = el [ padding 15 ] <| text s
+                        }
+                    )
+                    model.currentSets
+            
+            NoSelect -> none
 
         filterbox = row
             [ width fill
             , height headerRowHeight
             , Background.color <|
-                if model.selectingFilter 
-                then accColor
-                else bgColor
-            , Events.onClick ToggleSelectingFitler
+                case model.selecting of
+                    SelectingFilter -> accColor
+                    _ -> bgColor
+            , Events.onClick ( ToggleSelecting SelectingFilter )
             ]
             [ el
                 [ width fill
@@ -462,7 +528,7 @@ viewHeader model =
         container
             [ width fill
             , height shrink
-            , Element.below filterSelect
+            , Element.below selectBox
             ]
             [ input
             , div
@@ -518,7 +584,7 @@ viewFooter model =
                 [ paragraph
                     [ Font.size <| medTextSize model
                     , width fill
-                    , Element.alignRight
+                    , alignRight
                     ]
                     [ el [ Element.alignRight ] <| text "Local Storage Permissions: "]
                 , Input.button
