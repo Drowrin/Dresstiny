@@ -1,5 +1,4 @@
 module ApiModel exposing (
-    root,
     Manifest, decodeManifest,
     Item, decodeItems, encodeItem, decodeItem,
     PresNode, decodePresNodes,
@@ -13,25 +12,23 @@ import Json.Decode as Decode exposing (
     )
 import Json.Encode as Encode
 
-root : String
-root = "https://www.bungie.net"
-
 setBlackList : List String
 setBlackList = [ "Hunter", "Warlock", "Titan" ]
 
 type alias Manifest =
-    { presNodeUrl : String
+    { version : String
+    , presNodeUrl : String
     , collectibleUrl : String
     , itemDefUrl : String
     }
 
 decodeManifest : Decoder Manifest
 decodeManifest =
-    at [ "Response", "jsonWorldComponentContentPaths", "en" ] <|
-        Decode.map3 Manifest
-            ( field "DestinyPresentationNodeDefinition" string )
-            ( field "DestinyCollectibleDefinition" string )
-            ( field "DestinyInventoryItemDefinition" string )
+    field "Response" <| Decode.map4 Manifest
+        ( field "version" string )
+        ( at [ "jsonWorldComponentContentPaths", "en", "DestinyPresentationNodeDefinition" ] string )
+        ( at [ "jsonWorldComponentContentPaths", "en", "DestinyCollectibleDefinition" ] string )
+        ( at [ "jsonWorldComponentContentPaths", "en", "DestinyInventoryItemDefinition" ] string )
 
 type alias RawItem =
     { name : String

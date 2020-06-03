@@ -117,6 +117,7 @@ decodeInPortData s =
 type OutPortData
     = Query String
     | Filter FilterType
+    | AllowStorage Bool
 
 encodeOutPortData : OutPortData -> String
 encodeOutPortData d =
@@ -130,6 +131,8 @@ encodeOutPortData d =
                 ]
             Filter ft ->
                 [ ( "Filter", Encode.string <| filterStr ft ) ]
+            AllowStorage b ->
+                [ ( "AllowStorage", Encode.bool b ) ]
             
 
 decodeOutPortData : String -> Result Decode.Error OutPortData
@@ -142,6 +145,8 @@ decodeOutPortData s =
                 )
             , Decode.field "Filter"
                 ( Decode.map Filter <| Decode.map ifilterStr <| Decode.string )
+            , Decode.field "AllowStorage"
+                ( Decode.map AllowStorage <| Decode.bool )
             ]
         )
         s

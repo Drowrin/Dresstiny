@@ -27,9 +27,8 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events
 
-import ApiModel exposing (
-    Item, root
-    )
+import Const exposing (root)
+import ApiModel exposing (Item)
 import Shared exposing (
     FilterType(..), filterStr, validFilters,
     OutPortData(..), encodeOutPortData,
@@ -39,18 +38,21 @@ import Shared exposing (
 type alias Flags =
     { w : Int
     , h : Int
+    , permission : Bool
     }
 
 main : Program Flags Model Msg
 main = Browser.element
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions = subscriptions
-        }
+    { init = init
+    , view = view
+    , update = update
+    , subscriptions = subscriptions
+    }
 
 port sendPort : String -> Cmd msg
 port recvPort : (String -> msg) -> Sub msg
+
+port storePermission : Bool -> Cmd msg
 
 subscriptions : Model -> Sub Msg
 subscriptions _ =
@@ -78,6 +80,9 @@ type alias Model =
     , h : Int
     , device : Device
 
+    , storagePermission : Bool
+    , displayPermission : Bool
+
     , string : String
     , results : List Item
     , validSearch : Bool
@@ -93,6 +98,9 @@ type Msg
     = WindowResize Int Int
 
     | GotPortMessage String
+
+    | AllowStoragePermission
+    | DenyStoragePermission
 
     | SearchString String
 
@@ -110,10 +118,10 @@ init f =
     let
         device = classifyDevice { height = f.h, width = f.w }
         filter = None
-        dataState = Loading "Locating Manifests"
+        dataState = Loading "Checking Local Storage"
         viewState = MainView
     in
-        ( Model f.w f.h device "" [] False False filter dataState viewState
+        ( Model f.w f.h device f.permission (not f.permission) "" [] False False filter dataState viewState
         , Cmd.none
         )
 
@@ -178,6 +186,19 @@ update msg model =
                                       }
                                     , Cmd.none
                                     )
+        
+        AllowStoragePermission ->
+            ( { model | displayPermission = False }
+            , Cmd.batch
+                [ storePermission <| True
+                , sendPort <| encodeOutPortData <| AllowStorage True
+                ]
+            )
+        
+        DenyStoragePermission ->
+            ( { model | displayPermission = False }
+            , Cmd.none
+            )
         
         SearchString s ->
             case model.state of
@@ -247,6 +268,9 @@ selColor = rgb255 140 140 200
 
 textSize : Model -> Int
 textSize _ = 20
+
+medTextSize : Model -> Int
+medTextSize _ = 17
 
 bigTextSize : Model -> Int
 bigTextSize _ = 30
@@ -490,19 +514,67 @@ viewAbout model =
 
 viewFooter : Model -> Element Msg
 viewFooter model =
-    row
-        [ Font.size <| smallTextSize model, spacing 10, padding 7, centerX, alignBottom ]
-        [ link
-            []
-            { url = "https://github.com/Drowrin/Dresstiny"
-            , label = text "Source Code"
-            }
-        , text "|"
-        , Input.button
-            [ focused [] ]
-            { onPress = Just AboutPressed
-            , label = text "What is this?"
-            }
+    column
+        [ width fill
+        , height shrink
+        , alignBottom
+        , Background.color <| if model.displayPermission then bgColor2 else bgColor
+        ]
+        [ if model.displayPermission
+            then row
+                [ spacing 10
+                , padding 5
+                , centerX
+                ]
+                [ paragraph
+                    [ Font.size <| medTextSize model
+                    , width fill
+                    , Element.alignRight
+                    ]
+                    [ el [ Element.alignRight ] <| text "Local Storage Permissions: "]
+                , Input.button
+                    [ focused []
+                    , height <| px 35
+                    , width <| px 75
+                    , Background.color selColor
+                    ]
+                    { onPress = Just AllowStoragePermission
+                    , label = el
+                        [ centerX, centerY ]
+                        <| text "Allow"
+                    }
+                , Input.button
+                    [ focused []
+                    , height <| px 35
+                    , width <| px 75
+                    , Background.color bgColor3
+                    ]
+                    { onPress = Just DenyStoragePermission
+                    , label = el
+                        [ centerX, centerY ] 
+                        <|text "Deny"
+                    }
+                , paragraph
+                    [ Font.size 10
+                    , width fill
+                    ]
+                    [ text "This stores indexed data so it doesn't have to be regenerated every time." ]
+                ]
+            else none
+        , row
+            [ Font.size <| smallTextSize model, spacing 10, padding 7, centerX, alignBottom ]
+            [ link
+                []
+                { url = "https://github.com/Drowrin/Dresstiny"
+                , label = text "Source Code"
+                }
+            , text "|"
+            , Input.button
+                [ focused [] ]
+                { onPress = Just AboutPressed
+                , label = text "What is this?"
+                }
+            ]
         ]
 
 view : Model -> Html Msg
